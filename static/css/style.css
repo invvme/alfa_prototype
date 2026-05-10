@@ -1,0 +1,57 @@
+:root {
+    --brandRed: #F03226;
+    --uiRed: #F1463C;
+    --bg: #F3F4F6;
+    --green: #5FA50E;
+    --dark: #0B2035;
+    --light-gray: #B4BBC3;
+    --gray: #858F99;
+}
+
+
+/* Scrollbar styling */
+div::-webkit-scrollbar {
+    width: 6px;
+}
+
+div::-webkit-scrollbar-track {
+    background: #F3F4F6;
+}
+
+div::-webkit-scrollbar-thumb {
+    background: #B4BBC3;
+    border-radius: 3px;
+}
+
+div::-webkit-scrollbar-thumb:hover {
+    background: #858F99;
+}
+
+/* Category Block Component */
+.category-block {
+    height: 3rem; /* 12px * 16 = 48px */
+    border-radius: 1rem; /* 2xl */
+    background-color: var(--light-gray);
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.category-block__fill {
+    height: 100%;
+    border-radius: 1rem;
+    transition: width 0.3s ease;
+}
+
+/* Category Label */
+.category-label {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--gray);
+    margin-bottom: 0.5rem;
+}
+
+/* Category Container */
+.category-item {
+    margin-bottom: 1rem;
+}
+
