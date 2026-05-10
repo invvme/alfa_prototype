@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ project_name }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Tailwind CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body class="bg-black-900 text-white flex items-center justify-center min-h-screen">
+
+    <!-- APP CONTAINER -->
+    <div id="app" class="w-[380px] h-[700px] bg-white-100 rounded-3xl shadow-2xl overflow-hidden relative">
+
+        <!-- PHONE STATUS BAR (pure decoration) -->
+        <div class="h-6 bg-red-200"></div>
+
+        <!-- ===================== -->
+        <!-- SCREEN: LOGIN -->
+        <!-- ===================== -->
+        <div id="screen-login" class="screen p-6">
+            <h1 class="text-2xl font-bold mb-4">Login</h1>
+            <button class="bg-red-500 px-4 py-2 rounded">Go to Setup</button>
+        </div>
+
+        <!-- ===================== -->
+        <!-- SCREEN: SETUP -->
+        <!-- ===================== -->
+        <div id="screen-setup" class="screen hidden p-6">
+            <h1 class="text-2xl font-bold mb-4">Setup</h1>
+            <button class="bg-red-500 px-4 py-2 rounded">Go to Home</button>
+        </div>
+
+        <!-- ===================== -->
+        <!-- SCREEN: HOME -->
+        <!-- ===================== -->
+        <div id="screen-home" class="screen hidden p-6">
+            <h1 class="text-2xl font-bold mb-4">Home</h1>
+            <div class="bg-red-700 p-4 rounded-xl mb-4">
+                Balance Card
+            </div>
+        </div>
+
+        <!-- ===================== -->
+        <!-- SCREEN: LIMITS -->
+        <!-- ===================== -->
+        <div id="screen-limits" class="screen hidden p-6">
+            <h1 class="text-2xl font-bold mb-4">Limits</h1>
+        </div>
+
+        <!-- ===================== -->
+        <!-- SCREEN: FRIENDS -->
+        <!-- ===================== -->
+        <div id="screen-friends" class="screen hidden p-6">
+            <h1 class="text-2xl font-bold mb-4">Friends</h1>
+        </div>
+
+        <!-- ===================== -->
+        <!-- SCREEN: STATS -->
+        <!-- ===================== -->
+        <div id="screen-stats" class="screen hidden p-6">
+            <h1 class="text-2xl font-bold mb-4">Stats</h1>
+        </div>
+
+    </div>
+
+</body>
+</html>
