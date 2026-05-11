@@ -37,6 +37,42 @@
         </div>
 
         <!-- ===================== -->
+        <!-- SCREEN: LIMITS -->
+        <!-- ===================== -->
+        <div id="screen-limits" class="screen p-6 flex flex-col h-full">
+            
+            <!-- ACTION BUTTONS -->
+            <div class="flex gap-2 mb-6">
+                <!-- Add Category Button -->
+                <button class="flex-grow h-14 rounded-2xl font-bold text-2xl flex items-center justify-start pl-4" style="background-color: var(--dark); color: var(--bg);">
+                    + категория
+                </button>
+                
+                <!-- Coin Button -->
+                <button class="w-16 h-14 rounded-2xl flex items-center justify-center flex-shrink-0" style="background-color: var(--uiRed);">
+                </button>
+            </div>
+
+            <!-- CATEGORIES LIST -->
+            <div class="flex-grow overflow-y-auto">
+                
+                <!-- CATEGORY: Траты -->
+                <div class="mb-4">
+                    <!-- Category Name -->
+                    <p class="text-base font-medium mb-2" style="color: var(--dark);">Траты</p>
+                    
+                    <!-- Category Block -->
+                    <button class="w-full h-8 rounded-3xl overflow-hidden flex items-center" style="background-color: var(--light-gray); border: none; padding: 0; cursor: pointer;">
+                        <!-- Progress Fill -->
+                        <div class="h-full w-2/3 rounded-3xl" style="background-color: var(--brandRed); transition: width 0.3s ease;"></div>
+                    </button>
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- ===================== -->
         <!-- SCREEN: HOME -->
         <!-- ===================== -->
         <div id="screen-home" class="screen hidden p-6 flex flex-col h-full">
@@ -66,48 +102,6 @@
                     </div>
                 </div>
             </div>
-
-
-
-        <!-- ===================== -->
-        <!-- SCREEN: LIMITS -->
-        <!-- ===================== -->
-        <div id="screen-limits" class="screen p-6 flex flex-col h-full">
-            
-            <!-- ACTION BUTTONS -->
-            <div class="flex gap-2 mb-6">
-                <!-- Add Category Button -->
-                <button class="flex-grow h-16 rounded-2xl font-semibold text-sm flex items-center justify-center" style="background-color: var(--dark); color: var(--bg);">
-                    + категория
-                </button>
-                
-                <!-- Coin Button -->
-                <button class="w-16 h-16 rounded-r-2xl flex items-center justify-center flex-shrink-0" style="background-color: var(--uiRed);">
-                    <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24" style="color: var(--bg);">
-                        <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/>
-                        <path d="M12 6v12M9 9h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                    </svg>
-                </button>
-            </div>
-
-            <!-- CATEGORIES LIST -->
-            <div class="flex-grow overflow-y-auto">
-                
-                <!-- CATEGORY: Траты -->
-                <div class="mb-4">
-                    <!-- Category Name -->
-                    <p class="text-xs font-medium mb-2" style="color: var(--gray);">Траты</p>
-                    
-                    <!-- Category Block -->
-                    <div class="h-12 rounded-2xl overflow-hidden" style="background-color: var(--light-gray);">
-                        <!-- Progress Fill -->
-                        <div class="h-full w-2/3 rounded-2xl" style="background-color: var(--brandRed); transition: width 0.3s ease;"></div>
-                    </div>
-                </div>
-
-            </div>
-
-        </div>
 
 
 
@@ -151,6 +145,7 @@
                     </div>
                 </div>
             </div>
+
 
             <!-- GOAL PROGRESS BAR -->
             <div class="flex-shrink-0">
