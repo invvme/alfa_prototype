@@ -39,7 +39,7 @@
         <!-- ===================== -->
         <!-- SCREEN: LIMITS -->
         <!-- ===================== -->
-        <div id="screen-limits" class="screen p-6 flex flex-col h-full">
+        <div id="screen-limits" class="screen hidden p-6 flex flex-col h-full">
             
             <!-- ACTION BUTTONS -->
             <div class="flex gap-2 mb-6">
@@ -75,33 +75,35 @@
         <!-- ===================== -->
         <!-- SCREEN: HOME -->
         <!-- ===================== -->
-        <div id="screen-home" class="screen hidden p-6 flex flex-col h-full">
+        <div id="screen-home" class="screen p-6 flex flex-col h-full">
             
             <!-- SPENDING CIRCLE -->
-            <div class="flex justify-center mb-4">
-                <div class="relative w-72 h-72">
-                    <!-- Circle with thick stroke (1/8 radius outer visible) -->
-                    <svg class="w-full h-full" viewBox="0 0 288 288">
-                        <!-- Spending ring - categories will be represented as segments -->
-                        <!-- Red category segments (currently only spending) -->
-                        <circle cx="144" cy="144" r="120" fill="none" stroke=var(--brandRed) stroke-width="30" stroke-dasharray="300.37 753.98"/>
+            <button class="flex justify-center mb-4 bg-transparent border-none p-0 cursor-pointer w-full" style="padding: 0;"></button>
+                <div class="flex justify-center mb-4">
+                    <div class="relative w-72 h-72">
+                        <!-- Circle with thick stroke (1/8 radius outer visible) -->
+                        <svg class="w-full h-full" viewBox="0 0 288 288">
+                            <!-- Spending ring - categories will be represented as segments -->
+                            <!-- Red category segments (currently only spending) -->
+                            <circle cx="144" cy="144" r="120" fill="none" stroke=var(--brandRed) stroke-width="30" stroke-dasharray="300.37 753.98"/>
+                            
+                            <!-- Empty space for future categories -->
+                            <circle cx="144" cy="144" r="120" fill="none" stroke="var(--bg)" stroke-width="30" stroke-dasharray="453.61 753.98" stroke-dashoffset="-300.37"/>
+                        </svg>
                         
-                        <!-- Empty space for future categories -->
-                        <circle cx="144" cy="144" r="120" fill="none" stroke="var(--bg)" stroke-width="30" stroke-dasharray="453.61 753.98" stroke-dashoffset="-300.37"/>
-                    </svg>
-                    
-                    <!-- Center content with category labels -->
-                    <div class="absolute inset-0 flex items-center justify-center">
-                        <div class="bg-white-100 rounded-full w-52 h-52 flex flex-col items-center justify-center">
-                            <!-- Category dot and label -->
-                            <div class="flex items-center gap-2">
-                                <div class="w-3 h-3 rounded-full" style="background-color: var(--brandRed);"></div>
-                                <span class="text-sm font-medium" style="color: var(--dark);">Траты</span>
+                        <!-- Center content with category labels -->
+                        <div class="absolute inset-0 flex items-center justify-center">
+                            <div class="bg-white-100 rounded-full w-52 h-52 flex flex-col items-center justify-center">
+                                <!-- Category dot and label -->
+                                <div class="flex items-center gap-2">
+                                    <div class="w-3 h-3 rounded-full" style="background-color: var(--brandRed);"></div>
+                                    <span class="text-sm font-medium" style="color: var(--dark);">Траты</span>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
+            </button>
 
 
 
