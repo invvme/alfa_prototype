@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ project_name }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Tailwind CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+    <!-- JavaScript -->
+    <script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
+    
+</head>
+
+<body class="bg-gray-900 text-white flex items-center justify-center min-h-screen">
+
+    <!-- APP CONTAINER -->
+    <div id="app" class="w-[380px] h-[700px] bg-white rounded-3xl shadow-2xl overflow-hidden relative">
+
+        <!-- PHONE STATUS BAR (pure decoration) -->
+        <div class="h-6 bg-red-200"></div>
+
+        <!-- ===================== -->
+        <!-- SCREEN: LOGIN -->
+        <!-- ===================== -->
+        <div id="screen-login" class="screen hidden p-6">
+            <h1 class="text-2xl font-bold mb-4">Login</h1>
+            <button class="bg-red-500 px-4 py-2 rounded">Go to Setup</button>
+        </div>
+
+        <!-- ===================== -->
+        <!-- SCREEN: SETUP -->
+        <!-- ===================== -->
+        <div id="screen-setup" class="screen hidden p-6">
+            <h1 class="text-2xl font-bold mb-4">Setup</h1>
+            <button class="bg-red-500 px-4 py-2 rounded">Go to Home</button>
+        </div>
+
+
+        <!-- ===================== -->
+        <!-- SCREEN: LIMITS -->
+        <!-- ===================== -->
+        <div id="screen-limits" class="screen hidden px-6 pb-6 pt-3 flex flex-col h-full">
+
+            {% include 'components/back_button.html' %}
+            
+            <!-- ACTION BUTTONS -->
+            <div class="flex gap-2 mb-6">
+                <button id="add_category_btn" class="flex-grow h-14 rounded-2xl font-bold text-2xl flex items-center justify-start pl-4" style="background-color: var(--dark); color: var(--bg);">
+                    + категория
+                </button>
+                <!-- Coin button (пока болванка) -->
+                <button class="w-16 h-14 rounded-2xl flex items-center justify-center flex-shrink-0" style="background-color: var(--uiRed);"></button>
+            </div>
+
+            <!-- СПИСОК ВСЕХ КАТЕГОРИЙ (активных) -->
+            <div id="limits_list" class="flex-grow overflow-y-auto space-y-1">
+                <!-- JS наполнит -->
+            </div>
+        </div>
+
+
+        <!-- ===================== -->
+        <!-- SCREEN: HOME -->
+        <!-- ===================== -->
+        <div id="screen-home" class="screen p-6 flex flex-col h-full">
+            <!-- SPENDING WHEEL -->
+            <div class="flex justify-center mb-4 flex-shrink-0">
+                <button
+                    id="limits_button"
+                    class="relative w-72 h-72 rounded-full overflow-hidden border-none bg-transparent cursor-pointer p-0 flex items-center justify-center"
+                    style="clip-path: circle(50% at 50% 50%);">
+                    <!-- SVG wheel -->
+                    <svg id="wheel_svg" class="absolute inset-0 w-full h-full" viewBox="0 0 288 288">
+                        <defs>
+                            <!-- patterns will be added dynamically -->
+                        </defs>
+                        <!-- circles will be drawn by JS -->
+                    </svg>
+                    <!-- Center content -->
+                    <div class="relative z-10 bg-white rounded-full w-52 h-52 flex flex-col items-center justify-center p-2 overflow-hidden text-xs">
+                        <div id="wheel_categories" class="w-full space-y-1">
+                            <!-- JS заполнит точки с названиями -->
+                        </div>
+                    </div>
+                </button>
+            </div>
+
+            <!-- ПОЛОСА КАЛЕНДАРЯ (1 строка, кликабельная) -->
+            <button id="calendar_strip" class="flex-shrink-0 mb-4 rounded-xl overflow-hidden w-full text-left" style="border-color: var(--light-gray); background-color: var(--bg);">
+                <div class="grid gap-0" style="grid-template-columns: 50px 1fr 70px;">
+                    <div class="p-3 text-center text-xs font-medium" style="background-color: var(--light-gray); color: var(--dark); border-right: 2px solid var(--light-gray);" id="strip_date">--.--</div>
+                    <div class="p-3 text-xs font-medium" style="color: var(--dark); border-right: 2px solid var(--light-gray);" id="strip_name">Нет событий</div>
+                    <div class="p-3 text-center text-xs font-medium" style="color: var(--dark);" id="strip_amount">0₽</div>
+                </div>
+            </button>
+
+            <!-- ДВА ИНФОРМАЦИОННЫХ БЛОКА -->
+            <div class="flex-shrink-0 grid grid-cols-2 gap-3 mb-4">
+                <!-- Левый блок -->
+                <div class="rounded-xl p-4" style="background-color: var(--lighter-gray);">
+                    <p class="text-xs" style="color: var(--gray);">потрачено</p>
+                    <p class="text-xl font-bold" style="color: var(--dark);" id="spent_amount">0 ₽</p>
+                    <p class="text-xs mt-2" style="color: var(--gray);">накоплено</p>
+                    <p class="text-xl font-bold" style="color: var(--dark);" id="saved_amount">0 ₽</p>
+                </div>
+                <!-- Правый блок -->
+                <div class="rounded-xl p-4" style="background-color: var(--lighter-gray);">
+                    <p class="text-xs" style="color: var(--gray);">прогресс в этом месяце</p>
+                    <p class="text-xl font-bold" style="color: var(--green);" id="monthly_progress">+0,0%</p>
+                    <p class="text-xs mt-2" style="color: var(--gray);">расчётный срок накопления</p>
+                    <p class="text-xl font-bold" style="color: var(--dark);" id="target_date">--</p>
+                </div>
+            </div>
+
+            <!-- ПРОГРЕСС-БАР ЦЕЛИ (кнопка) -->
+            <div class="flex-shrink-0">
+                <p class="text-xs mb-1" style="color: var(--gray);">
+                    <span id="goal_name">Цель</span>: <span id="goal_percent">0%</span>
+                </p>
+                <button id="goal_progress_button" class="w-full h-3 rounded-full overflow-hidden border-none p-0 cursor-pointer" style="background-color: var(--lighter-gray);">
+                    <div id="goal_fill" class="h-full w-0 rounded-full" style="background-color: var(--brandRed); transition: width 0.3s ease;"></div>
+                </button>
+            </div>
+        </div>
+
+        <!-- ===================== -->
+        <!-- SCREEN: GOALS -->
+        <!-- ===================== -->
+        <div id="screen-goals" class="screen hidden flex flex-col h-full">
+            <!-- Хедер: назад + название цели + карандаш -->
+            <div class="flex items-center gap-2 px-6 pt-3 pb-2 flex-shrink-0">
+                {% include 'components/back_button.html' %}
+                <span id="goal_title" class="text-lg font-bold flex-grow" style="color: var(--dark);">Цель</span>
+                <button id="edit_goal_name_btn" class="w-8 h-8 rounded-lg flex items-center justify-center" style="color: var(--gray);">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Финансовый блок -->
+            <div class="px-6 flex-shrink-0">
+                <p id="goal_balance" class="text-4xl font-bold mb-1" style="color: var(--dark);">0 ₽</p>
+                <p id="goal_total_income" class="text-sm" style="color: var(--gray);">Доход за всё время 0,00 ₽</p>
+            </div>
+
+            <!-- Кнопки пополнить/вывести -->
+            <div class="flex gap-2 px-6 my-4 flex-shrink-0">
+                <button class="flex-1 h-12 rounded-xl font-semibold text-sm" style="background-color: var(--dark); color: var(--bg);">+ Пополнить</button>
+                <button class="flex-1 h-12 rounded-xl font-semibold text-sm" style="background-color: var(--dark); color: var(--bg);">↑ Вывести</button>
+            </div>
+
+            <!-- Информационные карточки -->
+            <div class="flex-shrink-0 grid grid-cols-2 gap-3 px-6 mb-4">
+                <!-- Ставка -->
+                <div class="rounded-xl p-4" style="background-color: var(--lighter-gray);">
+                    <p class="text-xs" style="color: var(--gray);">Ваша ставка</p>
+                    <p id="goal_interest_rate" class="text-xl font-bold" style="color: var(--dark);">13,5%</p>
+                    <p class="text-xs mt-1" style="color: var(--green);">Максимальный % в мае</p>
+                </div>
+                <!-- Прогноз дохода -->
+                <div class="rounded-xl p-4" style="background-color: var(--lighter-gray);">
+                    <p class="text-xs" style="color: var(--gray);">Прогноз дохода</p>
+                    <p id="goal_predicted_income" class="text-xl font-bold" style="color: var(--dark);">8,51 ₽</p>
+                    <p id="goal_income_date" class="text-xs mt-1" style="color: var(--gray);">Начислим 31 мая с 20:00</p>
+                </div>
+            </div>
+
+            <!-- Виджет цели -->
+            <div class="flex-shrink-0 px-6 mb-4">
+                <div class="rounded-xl p-4 flex items-center gap-3" style="background-color: var(--lighter-gray);">
+                    <div class="flex-grow">
+                        <p class="text-sm font-medium mb-1" style="color: var(--dark);">Осталось накопить: <span id="goal_remaining" class="font-bold">0 ₽</span></p>
+                        <div class="w-full h-2 rounded-full overflow-hidden" style="background-color: var(--light-gray);">
+                            <div id="goal_progress_inner" class="h-full rounded-full" style="background-color: var(--green); width: 0%; transition: width 0.3s;"></div>
+                        </div>
+                    </div>
+                    <div class="text-4xl opacity-50">🎯</div> <!-- иконка цели -->
+                </div>
+            </div>
+
+            <!-- Кнопка настройки автопополнения -->
+            <div class="flex-shrink-0 px-6 pb-2 mt-2">
+                <button class="w-full h-12 rounded-xl font-semibold text-sm" style="background-color: var(--lighter-gray); color: var(--dark);">
+                    Настроить автопополнение
+                </button>
+            </div>
+        </div>
+
+
+        <!-- ===================== -->
+        <!-- SCREEN: CALENDAR (новый экран) -->
+        <!-- ===================== -->
+        <div id="screen-calendar" class="screen hidden p-6 flex flex-col h-full">
+            <!-- Верхняя панель с кнопкой назад и "+" -->
+            <div class="flex justify-between items-center mb-4 flex-shrink-0">
+                {% include 'components/back_button.html' %}
+                <button id="add_event_btn" class="w-10 h-10 rounded-xl flex items-center justify-center" style="background-color: var(--dark); color: var(--bg);">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                </button>
+            </div>
+            <!-- Список событий -->
+            <div id="events_list" class="flex-grow overflow-y-auto space-y-3"></div>
+        </div>
+    </div>
+
+
+    <!-- ===================== -->
+    <!-- МОДАЛЬНОЕ ОКНО: СОЗДАНИЕ/РЕДАКТИРОВАНИЕ СОБЫТИЯ -->
+    <!-- ===================== -->
+    <div id="event_modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+        <div class="bg-[var(--bg)] rounded-2xl p-6 w-[320px] max-h-[85vh] overflow-y-auto shadow-xl">
+            <h2 class="text-lg font-bold mb-4" style="color: var(--dark);" id="modal_title">Новый платёж</h2>
+            
+            <!-- Название -->
+            <input id="event_name" type="text" placeholder="Название" class="w-full p-2 rounded-xl mb-3 border" style="border-color: var(--light-gray); background: white; color: var(--dark);">
+            
+            <!-- Тип: разовый / регулярный -->
+            <div class="mb-3 flex gap-4">
+                <label class="flex items-center gap-1 text-sm" style="color: var(--dark);">
+                    <input type="radio" name="event_type" value="one-time" checked> Разовый
+                </label>
+                <label class="flex items-center gap-1 text-sm" style="color: var(--dark);">
+                    <input type="radio" name="event_type" value="regular"> Регулярный
+                </label>
+            </div>
+            
+            <!-- Поля для разового -->
+            <div id="one_time_fields">
+                <input id="event_date" type="date" class="w-full p-2 rounded-xl mb-3 border" style="border-color: var(--light-gray); background: white; color: var(--dark);">
+            </div>
+            
+            <!-- Поля для регулярного -->
+            <div id="regular_fields" class="hidden">
+                <div class="flex gap-2 mb-3">
+                    <input id="interval_value" type="number" min="1" placeholder="Число" class="w-1/2 p-2 rounded-xl border" style="border-color: var(--light-gray); background: white; color: var(--dark);">
+                    <select id="interval_unit" class="w-1/2 p-2 rounded-xl border" style="border-color: var(--light-gray); background: white; color: var(--dark);">
+                        <option value="days">дни</option>
+                        <option value="weeks">недели</option>
+                        <option value="months">месяцы</option>
+                    </select>
+                </div>
+                <input id="start_date" type="date" class="w-full p-2 rounded-xl mb-3 border" style="border-color: var(--light-gray); background: white; color: var(--dark);">
+            </div>
+            
+            <!-- Сумма -->
+            <input id="event_amount" type="number" placeholder="Сумма" class="w-full p-2 rounded-xl mb-3 border" style="border-color: var(--light-gray); background: white; color: var(--dark);">
+            
+            <!-- Напоминание -->
+            <select id="event_reminder" class="w-full p-2 rounded-xl mb-4 border" style="border-color: var(--light-gray); background: white; color: var(--dark);">
+                <option value="none">Не напоминать</option>
+                <option value="1day">За день</option>
+                <option value="3days">За 3 дня</option>
+                <option value="1week">За неделю</option>
+            </select>
+            
+            <!-- Кнопки действий -->
+            <div class="flex items-center gap-2">
+                <button id="save_event_btn" class="flex-grow bg-[var(--brandRed)] text-white py-2 rounded-xl font-bold">Сохранить</button>
+                <button id="delete_event_btn" class="hidden w-10 h-10 rounded-xl border flex items-center justify-center flex-shrink-0" style="border-color: var(--light-gray); background-color: var(--bg);">
+                    <!-- Иконка корзины -->
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--gray);">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"></path>
+                        <line x1="10" y1="11" x2="10" y2="17"></line>
+                        <line x1="14" y1="11" x2="14" y2="17"></line>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Модальное окно: лимит категории -->
+    <div id="limit_modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+        <div class="rounded-2xl p-6 w-[320px] max-h-[85vh] overflow-y-auto shadow-xl" style="background-color: var(--bg);">
+            <h2 class="text-lg font-bold mb-4" style="color: var(--dark);" id="limit_modal_title">Лимит категории</h2>
+            
+            <!-- Название категории (нередактируемое) -->
+            <p class="text-sm font-medium mb-3" style="color: var(--gray);" id="limit_category_name"></p>
+            
+            <!-- Лимит -->
+            <label class="block text-xs mb-1" style="color: var(--dark);">Лимит (₽)</label>
+            <input id="limit_value" type="number" min="0" class="w-full p-2 rounded-xl mb-4 border" style="border-color: var(--light-gray); background: white; color: var(--dark);">
+            
+            <!-- Кнопки -->
+            <div class="flex items-center gap-2">
+                <button id="save_limit_btn" class="flex-grow py-2 rounded-xl font-bold" style="background-color: var(--brandRed); color: var(--bg);">Сохранить</button>
+                <button id="delete_limit_btn" class="w-10 h-10 rounded-xl border flex items-center justify-center flex-shrink-0" style="border-color: var(--light-gray); background-color: var(--bg);">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--gray);">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"></path>
+                        <line x1="10" y1="11" x2="10" y2="17"></line>
+                        <line x1="14" y1="11" x2="14" y2="17"></line>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ========== MODAL: ВЫБОР КАТЕГОРИИ ========== -->
+    <div id="category_select_modal"
+        class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+
+        <div class="rounded-2xl p-4 w-[320px] max-h-[85vh] shadow-xl flex flex-col"
+            style="background-color: var(--bg);">
+
+            <!-- Заголовок -->
+            <h2 class="text-lg font-bold mb-3 text-center"
+                style="color: var(--dark);">
+                Выберите категорию
+            </h2>
+
+            <!-- Список -->
+            <div id="category_select_list"
+                class="flex-1 overflow-y-auto space-y-2 mb-3">
+            </div>
+
+            <!-- Нижняя фикс-панель (как у тебя в limit_modal) -->
+            <div class="pt-3 border-t"
+                style="background-color: var(--bg);">
+
+                <button id="confirm_category_btn"
+                        class="w-full py-2 rounded-xl font-bold"
+                        style="background-color: var(--brandRed); color: var(--bg);">
+                    Выбрать
+                </button>
+            </div>
+
+        </div>
+    </div>
+    
+</body>
+</html>

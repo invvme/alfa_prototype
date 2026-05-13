@@ -4,200 +4,260 @@
     <meta charset="UTF-8">
     <title>{{ project_name }}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <!-- Tailwind CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-
-    <!-- Custom CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
 </head>
-
-<body class="bg-black-900 text-white flex items-center justify-center min-h-screen">
-
+<body class="bg-gray-900 text-white flex items-center justify-center min-h-screen">
     <!-- APP CONTAINER -->
-    <div id="app" class="w-[380px] h-[700px] bg-white-100 rounded-3xl shadow-2xl overflow-hidden relative">
-
-        <!-- PHONE STATUS BAR (pure decoration) -->
+    <div id="app" class="w-[380px] h-[700px] bg-white rounded-3xl shadow-2xl overflow-hidden relative">
         <div class="h-6 bg-red-200"></div>
 
-        <!-- ===================== -->
-        <!-- SCREEN: LOGIN -->
-        <!-- ===================== -->
-        <div id="screen-login" class="screen hidden p-6">
-            <h1 class="text-2xl font-bold mb-4">Login</h1>
-            <button class="bg-red-500 px-4 py-2 rounded">Go to Setup</button>
-        </div>
+        <!-- SCREENS -->
+        <div id="screen-login" class="screen hidden p-6"><h1>Login</h1></div>
+        <div id="screen-setup" class="screen hidden p-6"><h1>Setup</h1></div>
 
-        <!-- ===================== -->
-        <!-- SCREEN: SETUP -->
-        <!-- ===================== -->
-        <div id="screen-setup" class="screen hidden p-6">
-            <h1 class="text-2xl font-bold mb-4">Setup</h1>
-            <button class="bg-red-500 px-4 py-2 rounded">Go to Home</button>
-        </div>
-
-        <!-- ===================== -->
-        <!-- SCREEN: LIMITS -->
-        <!-- ===================== -->
-        <div id="screen-limits" class="screen hidden p-6 flex flex-col h-full">
-            
-            <!-- ACTION BUTTONS -->
+        <!-- LIMITS -->
+        <div id="screen-limits" class="screen hidden px-6 pb-6 pt-3 flex flex-col h-full">
+            {% include 'components/back_button.html' %}
             <div class="flex gap-2 mb-6">
-                <!-- Add Category Button -->
-                <button class="flex-grow h-14 rounded-2xl font-bold text-2xl flex items-center justify-start pl-4" style="background-color: var(--dark); color: var(--bg);">
-                    + категория
-                </button>
-                
-                <!-- Coin Button -->
-                <button class="w-16 h-14 rounded-2xl flex items-center justify-center flex-shrink-0" style="background-color: var(--uiRed);">
-                </button>
+                <button id="add_category_btn" class="flex-grow h-14 rounded-2xl font-bold text-2xl flex items-center justify-start pl-4" style="background-color: var(--dark); color: var(--bg);">+ категория</button>
             </div>
-
-            <!-- CATEGORIES LIST -->
-            <div class="flex-grow overflow-y-auto">
-                
-                <!-- CATEGORY: Траты -->
-                <div class="mb-4">
-                    <!-- Category Name -->
-                    <p class="text-base font-medium mb-2" style="color: var(--dark);">Траты</p>
-                    
-                    <!-- Category Block -->
-                    <button class="w-full h-8 rounded-3xl overflow-hidden flex items-center" style="background-color: var(--light-gray); border: none; padding: 0; cursor: pointer;">
-                        <!-- Progress Fill -->
-                        <div class="h-full w-2/3 rounded-3xl" style="background-color: var(--brandRed); transition: width 0.3s ease;"></div>
-                    </button>
-                </div>
-
-            </div>
-
+            <div id="limits_list" class="flex-grow overflow-y-auto space-y-1"></div>
         </div>
 
-        <!-- ===================== -->
-        <!-- SCREEN: HOME -->
-        <!-- ===================== -->
+        <!-- HOME -->
         <div id="screen-home" class="screen p-6 flex flex-col h-full">
-            <!-- SPENDING CIRCLE -->
+            <div class="flex justify-between items-center mb-2 flex-shrink-0">
+                <div></div>
+                <button id="notifications_button" class="w-8 h-8 rounded-lg flex items-center justify-center" style="color: var(--dark);">🔔</button>
+            </div>
             <div class="flex justify-center mb-4 flex-shrink-0">
-                <!-- Clickable circular container -->
-                <button
-                    id="limits_button"
-                    class="relative w-72 h-72 rounded-full overflow-hidden border-none bg-transparent cursor-pointer p-0 flex items-center justify-center"
-                    style="clip-path: circle(50% at 50% 50%);">
-                    <!-- SVG ring -->
-                    <svg class="absolute inset-0 w-full h-full" viewBox="0 0 288 288">
-                        <!-- Spending segment -->
-                        <circle
-                            cx="144"
-                            cy="144"
-                            r="120"
-                            fill="none"
-                            stroke="var(--brandRed)"
-                            stroke-width="30"
-                            stroke-dasharray="300.37 753.98"
-                        />
-                        <!-- Empty segment -->
-                        <circle
-                            cx="144"
-                            cy="144"
-                            r="120"
-                            fill="none"
-                            stroke="var(--bg)"
-                            stroke-width="30"
-                            stroke-dasharray="453.61 753.98"
-                            stroke-dashoffset="-300.37"
-                        />
-                    </svg>
-                    <!-- Center content -->
-                    <div class="relative z-10 bg-white rounded-full w-52 h-52 flex flex-col items-center justify-center">
-                        <div class="flex items-center gap-2">
-                            <div
-                                class="w-3 h-3 rounded-full"
-                                style="background-color: var(--brandRed);"
-                            ></div>
-                            <span
-                                class="text-sm font-medium"
-                                style="color: var(--dark);"
-                            >
-                                Траты
-                            </span>
+                <button id="limits_button" class="relative w-72 h-72 rounded-full overflow-hidden border-none bg-transparent cursor-pointer p-0 flex items-center justify-center" style="clip-path: circle(50% at 50% 50%);">
+                    <svg id="wheel_svg" class="absolute inset-0 w-full h-full" viewBox="0 0 288 288"><defs></defs></svg>
+                    <div class="relative z-10 bg-white rounded-full w-52 h-52 flex flex-col items-center justify-center p-2 overflow-hidden text-xs">
+                        <div id="wheel_categories" class="w-full space-y-1"></div>
+                    </div>
+                </button>
+            </div>
+            <button id="calendar_strip" class="flex-shrink-0 mb-4 rounded-xl overflow-hidden w-full text-left" style="background-color: var(--bg);">
+                <div class="grid" style="grid-template-columns: 50px 1fr 70px;">
+                    <div class="p-3 text-center text-xs font-medium" style="background-color: var(--light-gray); color: var(--dark);" id="strip_date">--.--</div>
+                    <div class="p-3 text-xs font-medium" style="color: var(--dark);" id="strip_name">Нет событий</div>
+                    <div class="p-3 text-center text-xs font-medium" style="color: var(--dark);" id="strip_amount">0₽</div>
+                </div>
+            </button>
+            <div class="flex-shrink-0 grid grid-cols-2 gap-3 mb-4">
+                <div class="rounded-xl p-4" style="background-color: var(--lighter-gray);">
+                    <p class="text-xs" style="color: var(--gray);">потрачено</p>
+                    <p class="text-xl font-bold" style="color: var(--dark);" id="spent_amount">0 ₽</p>
+                    <p class="text-xs mt-2" style="color: var(--gray);">накоплено</p>
+                    <p class="text-xl font-bold" style="color: var(--dark);" id="saved_amount">0 ₽</p>
+                </div>
+                <div class="rounded-xl p-4" style="background-color: var(--lighter-gray);">
+                    <p class="text-xs" style="color: var(--gray);">прогресс в этом месяце</p>
+                    <p class="text-xl font-bold" style="color: var(--green);" id="monthly_progress">+0,0%</p>
+                    <p class="text-xs mt-2" style="color: var(--gray);">расчётный срок накопления</p>
+                    <p class="text-xl font-bold" style="color: var(--dark);" id="target_date">--</p>
+                </div>
+            </div>
+            <div class="flex-shrink-0">
+                <p class="text-xs mb-1" style="color: var(--gray);"><span id="goal_name">Цель</span>: <span id="goal_percent">0%</span></p>
+                <button id="goal_progress_button" class="w-full h-3 rounded-full overflow-hidden border-none p-0 cursor-pointer" style="background-color: var(--lighter-gray);">
+                    <div id="goal_fill" class="h-full w-0 rounded-full" style="background-color: var(--brandRed); transition: width 0.3s ease;"></div>
+                </button>
+            </div>
+            <button id="friends_button" class="absolute bottom-4 right-4 w-10 h-10 rounded-full flex items-center justify-center text-lg" style="background-color: var(--dark); color: var(--bg);">👥</button>
+        </div>
+
+        <!-- GOALS -->
+        <div id="screen-goals" class="screen hidden flex flex-col h-full">
+            <div class="flex items-center gap-2 px-6 pt-3 pb-2 flex-shrink-0">
+                {% include 'components/back_button.html' %}
+                <span id="goal_title" class="text-lg font-bold flex-grow" style="color: var(--dark);">Цель</span>
+                <button id="edit_goal_name_btn" class="w-8 h-8 rounded-lg" style="color: var(--gray);">✎</button>
+                <button id="edit_goal_target_btn" class="w-8 h-8 rounded-lg" style="color: var(--gray);">⚙️</button>
+            </div>
+            <div class="px-6 flex-shrink-0">
+                <p id="goal_balance" class="text-4xl font-bold mb-1" style="color: var(--dark);">0 ₽</p>
+                <p id="goal_total_income" class="text-sm" style="color: var(--gray);">Доход за всё время 0,00 ₽</p>
+                <p id="goal_deadline_display" class="text-xs" style="color: var(--gray);"></p>
+            </div>
+            <div class="flex gap-2 px-6 my-4 flex-shrink-0">
+                <button id="goal_deposit_btn" class="flex-1 h-12 rounded-xl font-semibold text-sm" style="background-color: var(--dark); color: var(--bg);">+ Пополнить</button>
+                <button id="goal_withdraw_btn" class="flex-1 h-12 rounded-xl font-semibold text-sm" style="background-color: var(--dark); color: var(--bg);">↑ Вывести</button>
+            </div>
+            <div class="flex-shrink-0 grid grid-cols-2 gap-3 px-6 mb-4">
+                <div class="rounded-xl p-4" style="background-color: var(--lighter-gray);">
+                    <p class="text-xs" style="color: var(--gray);">Ваша ставка</p>
+                    <p id="goal_interest_rate" class="text-xl font-bold" style="color: var(--dark);">13,5%</p>
+                    <p class="text-xs mt-1" style="color: var(--green);">Максимальный % в мае</p>
+                </div>
+                <div class="rounded-xl p-4" style="background-color: var(--lighter-gray);">
+                    <p class="text-xs" style="color: var(--gray);">Прогноз дохода</p>
+                    <p id="goal_predicted_income" class="text-xl font-bold" style="color: var(--dark);">8,51 ₽</p>
+                    <p id="goal_income_date" class="text-xs mt-1" style="color: var(--gray);">Начислим 31 мая с 20:00</p>
+                </div>
+            </div>
+            <div class="flex-shrink-0 px-6 mb-4">
+                <div class="rounded-xl p-4 flex items-center gap-3" style="background-color: var(--lighter-gray);">
+                    <div class="flex-grow">
+                        <p class="text-sm font-medium mb-1" style="color: var(--dark);">Осталось накопить: <span id="goal_remaining" class="font-bold">0 ₽</span></p>
+                        <div class="w-full h-2 rounded-full overflow-hidden" style="background-color: var(--light-gray);">
+                            <div id="goal_progress_inner" class="h-full rounded-full" style="background-color: var(--green); width: 0%;"></div>
                         </div>
                     </div>
-                </button>
-            </div>
-
-
-
-            <!-- CALENDAR/TRANSACTIONS LIST -->
-            <div class="flex-shrink-0 mb-6 rounded-xl overflow-hidden" style="border: 2px solid var(--light-gray); background-color: var(--bg);">
-                <!-- Calendar rows (transaction items) -->
-                <div class="divide-y-2" style="border-color: var(--light-gray);">
-                    <!-- Row 1 -->
-                    <div class="grid gap-0" style="grid-template-columns: 50px 1fr 70px;">
-                        <div class="p-3 text-center text-xs font-medium" style="background-color: var(--light-gray); color: var(--dark); border-right: 2px solid var(--light-gray);">10.05</div>
-                        <div class="p-3 text-xs" style="color: var(--gray); border-right: 2px solid var(--light-gray);">Кофе</div>
-                        <div class="p-3 text-center text-xs font-medium" style="color: var(--gray);">-150₽</div>
-                    </div>
-                    
-                    <!-- Row 2 -->
-                    <div class="grid gap-0" style="grid-template-columns: 50px 1fr 70px;">
-                        <div class="p-3 text-center text-xs font-medium" style="background-color: var(--light-gray); color: var(--dark); border-right: 2px solid var(--light-gray);">09.05</div>
-                        <div class="p-3 text-xs" style="color: var(--gray); border-right: 2px solid var(--light-gray);">Продукты</div>
-                        <div class="p-3 text-center text-xs font-medium" style="color: var(--gray);">-850₽</div>
-                    </div>
-                    
-                    <!-- Row 3 -->
-                    <div class="grid gap-0" style="grid-template-columns: 50px 1fr 70px;">
-                        <div class="p-3 text-center text-xs font-medium" style="background-color: var(--light-gray); color: var(--dark); border-right: 2px solid var(--light-gray);">08.05</div>
-                        <div class="p-3 text-xs" style="color: var(--gray); border-right: 2px solid var(--light-gray);">Такси</div>
-                        <div class="p-3 text-center text-xs font-medium" style="color: var(--gray);">-320₽</div>
-                    </div>
-
-                    <!-- Row 4 -->
-                    <div class="grid gap-0" style="grid-template-columns: 50px 1fr 70px;">
-                        <div class="p-3 text-center text-xs font-medium" style="background-color: var(--light-gray); color: var(--dark); border-right: 2px solid var(--light-gray);">07.05</div>
-                        <div class="p-3 text-xs" style="color: var(--gray); border-right: 2px solid var(--light-gray);">Обед</div>
-                        <div class="p-3 text-center text-xs font-medium" style="color: var(--gray);">-580₽</div>
-                    </div>
-
-                    <!-- Row 5 -->
-                    <div class="grid gap-0" style="grid-template-columns: 50px 1fr 70px;">
-                        <div class="p-3 text-center text-xs font-medium" style="background-color: var(--light-gray); color: var(--dark); border-right: 2px solid var(--light-gray);">06.05</div>
-                        <div class="p-3 text-xs" style="color: var(--gray); border-right: 2px solid var(--light-gray);">Бензин</div>
-                        <div class="p-3 text-center text-xs font-medium" style="color: var(--gray);">-1200₽</div>
-                    </div>
+                    <div class="text-4xl opacity-50">🎯</div>
                 </div>
             </div>
+            <div class="flex-shrink-0 px-6 pb-2 mt-2 space-y-2">
+                <button id="autotopup_btn" class="w-full h-12 rounded-xl font-semibold text-sm" style="background-color: var(--lighter-gray); color: var(--dark);">Настроить автопополнение</button>
+                <button id="style_change_btn" class="w-full h-12 rounded-xl font-semibold text-sm" style="background-color: var(--lighter-gray); color: var(--dark);">Стиль общения</button>
+            </div>
+        </div>
 
+        <!-- CALENDAR -->
+        <div id="screen-calendar" class="screen hidden p-6 flex flex-col h-full">
+            <div class="flex justify-between items-center mb-4">
+                {% include 'components/back_button.html' %}
+                <button id="add_event_btn" class="w-10 h-10 rounded-xl flex items-center justify-center" style="background-color: var(--dark); color: var(--bg);">+</button>
+            </div>
+            <div id="events_list" class="flex-grow overflow-y-auto space-y-3"></div>
+        </div>
 
-            <!-- GOAL PROGRESS BAR -->
-            <div class="flex-shrink-0">
-                <!-- Goal label -->
-                <p class="mb-3 text-sm font-medium" style="color: var(--gray);">Цель: а</p>
-                
-                <!-- Progress bar container -->
-                <div class="w-full h-3 rounded-full overflow-hidden" style="background-color: var(--light-gray);">
-                    <!-- Progress fill -->
-                    <div class="h-full w-2/3 rounded-full" style="background-color: var(--brandRed); transition: width 0.3s ease;"></div>
+        <!-- FRIENDS -->
+        <div id="screen-friends" class="screen hidden p-6 flex flex-col h-full">
+            {% include 'components/back_button.html' %}
+            <h2 class="text-lg font-bold mb-4" style="color: var(--dark);">Друзья</h2>
+            <div class="rounded-xl p-4 mb-4" style="background-color: var(--lighter-gray);">
+                <p class="font-bold mb-2">🏆 Кто накопит быстрее</p>
+                <p>Вы: <span id="challenge_your_progress">0₽</span></p>
+                <p>Друг: <span id="challenge_friend_progress">0₽</span></p>
+            </div>
+            <div class="rounded-xl p-4" style="background-color: var(--lighter-gray);">
+                <p class="font-bold mb-2">✈️ Совместная копилка (<span id="joint_target">100000₽</span>)</p>
+                <p>Собрано: <span id="joint_saved">0₽</span></p>
+                <div class="flex gap-2 mt-2">
+                    <button id="joint_deposit_btn" class="flex-1 h-10 rounded-xl text-sm" style="background-color: var(--dark); color: var(--bg);">Внести</button>
+                    <button id="joint_withdraw_btn" class="flex-1 h-10 rounded-xl text-sm" style="background-color: var(--dark); color: var(--bg);">Вывести</button>
                 </div>
             </div>
-
         </div>
 
-        <!-- ===================== -->
-        <!-- SCREEN: FRIENDS -->
-        <!-- ===================== -->
-        <div id="screen-friends" class="screen hidden p-6">
-            <h1 class="text-2xl font-bold mb-4">Friends</h1>
+        <!-- NOTIFICATIONS -->
+        <div id="screen-notifications" class="screen hidden p-6 flex flex-col h-full">
+            {% include 'components/back_button.html' %}
+            <h2 class="text-lg font-bold mb-4" style="color: var(--dark);">Уведомления</h2>
+            <div id="notifications_list" class="flex-grow overflow-y-auto space-y-3"></div>
         </div>
-
-        <!-- ===================== -->
-        <!-- SCREEN: STATS -->
-        <!-- ===================== -->
-        <div id="screen-stats" class="screen hidden p-6">
-            <h1 class="text-2xl font-bold mb-4">Stats</h1>
-        </div>
-
     </div>
+
+    <!-- MODALS -->
+    <div id="event_modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+        <div class="rounded-2xl p-6 w-[320px] max-h-[85vh] overflow-y-auto shadow-xl" style="background-color: var(--bg);">
+            <h2 id="modal_title" class="text-lg font-bold mb-4" style="color: var(--dark);">Новый платёж</h2>
+            <input id="event_name" placeholder="Название" class="w-full p-2 rounded-xl mb-3 border" style="border-color: var(--light-gray);">
+            <div class="mb-3 flex gap-4">
+                <label><input type="radio" name="event_type" value="one-time" checked> Разовый</label>
+                <label><input type="radio" name="event_type" value="regular"> Регулярный</label>
+            </div>
+            <div id="one_time_fields"><input id="event_date" type="date" class="w-full p-2 rounded-xl mb-3 border" style="border-color: var(--light-gray);"></div>
+            <div id="regular_fields" class="hidden">
+                <div class="flex gap-2 mb-3">
+                    <input id="interval_value" placeholder="Число" class="w-1/2 p-2 rounded-xl border" style="border-color: var(--light-gray);">
+                    <select id="interval_unit" class="w-1/2 p-2 rounded-xl border" style="border-color: var(--light-gray);">
+                        <option value="days">дни</option><option value="weeks">недели</option><option value="months">месяцы</option>
+                    </select>
+                </div>
+                <input id="start_date" type="date" class="w-full p-2 rounded-xl mb-3 border" style="border-color: var(--light-gray);">
+            </div>
+            <input id="event_amount" type="number" placeholder="Сумма" class="w-full p-2 rounded-xl mb-3 border" style="border-color: var(--light-gray);">
+            <select id="event_reminder" class="w-full p-2 rounded-xl mb-4 border" style="border-color: var(--light-gray);">
+                <option value="none">Не напоминать</option><option value="1day">За день</option><option value="3days">За 3 дня</option><option value="1week">За неделю</option>
+            </select>
+            <div class="flex items-center gap-2">
+                <button id="save_event_btn" class="flex-grow py-2 rounded-xl font-bold" style="background-color: var(--brandRed); color: var(--bg);">Сохранить</button>
+                <button id="delete_event_btn" class="hidden w-10 h-10 rounded-xl border" style="border-color: var(--light-gray); background-color: var(--bg);">🗑️</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="limit_modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+        <div class="rounded-2xl p-6 w-[320px] max-h-[85vh] overflow-y-auto shadow-xl" style="background-color: var(--bg);">
+            <h2 class="text-lg font-bold mb-4" style="color: var(--dark);">Лимит категории</h2>
+            <p id="limit_category_name" class="text-sm font-medium mb-3" style="color: var(--gray);"></p>
+            <label class="block text-xs mb-1" style="color: var(--dark);">Лимит (₽)</label>
+            <input id="limit_value" type="number" min="0" class="w-full p-2 rounded-xl mb-4 border" style="border-color: var(--light-gray);">
+            <div class="flex items-center gap-2">
+                <button id="save_limit_btn" class="flex-grow py-2 rounded-xl font-bold" style="background-color: var(--brandRed); color: var(--bg);">Сохранить</button>
+                <button id="delete_limit_btn" class="w-10 h-10 rounded-xl border" style="border-color: var(--light-gray); background-color: var(--bg);">🗑️</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="category_select_modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+        <div class="rounded-2xl p-4 w-[320px] max-h-[85vh] shadow-xl flex flex-col" style="background-color: var(--bg);">
+            <h2 class="text-lg font-bold mb-3 text-center" style="color: var(--dark);">Выберите категорию</h2>
+            <div id="category_select_list" class="flex-1 overflow-y-auto space-y-2 mb-3"></div>
+            <button id="confirm_category_btn" class="w-full py-2 rounded-xl font-bold opacity-50" style="background-color: var(--brandRed); color: var(--bg);" disabled>Выбрать</button>
+        </div>
+    </div>
+
+    <div id="goal_transaction_modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+        <div class="rounded-2xl p-6 w-[320px] shadow-xl" style="background-color: var(--bg);">
+            <h2 id="transaction_title" class="text-lg font-bold mb-4" style="color: var(--dark);">Перевод средств</h2>
+            <p id="transaction_balance" class="text-sm mb-2" style="color: var(--gray);"></p>
+            <p id="transaction_saved" class="text-sm mb-4" style="color: var(--gray);"></p>
+            <input id="transaction_amount" type="number" placeholder="Сумма" class="w-full p-2 rounded-xl mb-4 border" style="border-color: var(--light-gray);">
+            <input type="hidden" id="transaction_type">
+            <button id="goal_transaction_confirm" class="w-full py-2 rounded-xl font-bold" style="background-color: var(--brandRed); color: var(--bg);">Подтвердить</button>
+            <button id="goal_transaction_close" class="w-full mt-2 py-2 rounded-xl" style="background-color: var(--lighter-gray); color: var(--dark);">Отмена</button>
+        </div>
+    </div>
+
+    <div id="autotopup_modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+        <div class="rounded-2xl p-6 w-[320px] shadow-xl" style="background-color: var(--bg);">
+            <h2 class="text-lg font-bold mb-4" style="color: var(--dark);">Автопополнение</h2>
+            <select id="autotopup_type" class="w-full p-2 rounded-xl mb-3 border" style="border-color: var(--light-gray);">
+                <option value="none">Отключено</option>
+                <option value="percentOfExpense">% от расходов</option>
+                <option value="percentOfIncome">% от доходов</option>
+                <option value="percentOfBalance">% от остатка</option>
+            </select>
+            <input id="autotopup_percent" type="number" placeholder="Процент" class="w-full p-2 rounded-xl mb-3 border" style="border-color: var(--light-gray);">
+            <input id="autotopup_max" type="number" placeholder="Не более (₽)" class="w-full p-2 rounded-xl mb-4 border" style="border-color: var(--light-gray);">
+            <button id="autotopup_save" class="w-full py-2 rounded-xl font-bold" style="background-color: var(--brandRed); color: var(--bg);">Сохранить</button>
+            <button id="autotopup_close" class="w-full mt-2 py-2 rounded-xl" style="background-color: var(--lighter-gray); color: var(--dark);">Отмена</button>
+        </div>
+    </div>
+
+    <div id="style_modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+        <div class="rounded-2xl p-6 w-[320px] shadow-xl" style="background-color: var(--bg);">
+            <h2 class="text-lg font-bold mb-4" style="color: var(--dark);">Стиль общения</h2>
+            <label><input type="radio" name="comm_style" value="friendly"> Дружелюбный</label><br>
+            <label><input type="radio" name="comm_style" value="business"> Деловой</label><br>
+            <label><input type="radio" name="comm_style" value="motivational"> Мотивирующий</label><br>
+            <label><input type="radio" name="comm_style" value="toxic"> Токсичный</label>
+            <button id="style_save" class="w-full mt-4 py-2 rounded-xl font-bold" style="background-color: var(--brandRed); color: var(--bg);">Выбрать</button>
+            <button id="style_close" class="w-full mt-2 py-2 rounded-xl" style="background-color: var(--lighter-gray); color: var(--dark);">Отмена</button>
+        </div>
+    </div>
+
+    <!-- АНКЕТА -->
+    <div id="questionnaire_overlay" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+        <div class="rounded-2xl p-6 w-[340px] max-h-[85vh] shadow-xl" style="background-color: var(--bg);">
+            <div id="questionnaire_content"></div>
+        </div>
+    </div>
+
+    <!-- ДЕБАГ-ПАНЕЛЬ (вне телефона) -->
+    <div id="debug_panel" class="fixed bottom-4 right-4 z-[60] hidden bg-gray-800 p-4 rounded-xl text-white text-sm">
+        <button id="debug_add_money" class="block w-full mb-2 px-4 py-2 bg-green-600 rounded">💰 Добавить денег</button>
+        <button id="debug_spend_money" class="block w-full mb-2 px-4 py-2 bg-red-600 rounded">💸 Потратить на категорию</button>
+        <button id="debug_new_month" class="block w-full mb-2 px-4 py-2 bg-blue-600 rounded">📅 Новый месяц</button>
+        <button id="debug_reset" class="block w-full px-4 py-2 bg-gray-600 rounded">⚠️ Сбросить всё</button>
+    </div>
+    <button id="debug_toggle" class="fixed bottom-4 left-4 z-[60] w-10 h-10 bg-gray-700 text-white rounded-full flex items-center justify-center">🛠️</button>
 
 </body>
 </html>

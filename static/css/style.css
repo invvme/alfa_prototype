@@ -2,12 +2,64 @@
     --brandRed: #F03226;
     --uiRed: #F1463C;
     --bg: #F3F4F6;
-    --green: #5FA50E;
+    --green: #62b700;
     --dark: #0B2035;
     --light-gray: #B4BBC3;
+    --lighter-gray: #ebeef2;
     --gray: #858F99;
+    --limitscolor1: #eb2214;
+    --limitscolor2: #ff695e;
+    --limitscolor3: #83d426;
+    --limitscolor4: #af0c00;
+    --limitscolor5: #c3fe00;
+    --limitscolor6: #ff5719;
+    --limitscolor7: #6a0015;
+    --limitscolor8: #72d600;
+    --limitscolor0: #b0b0b0;
+    --limitscolor9: #ad0054;
 }
 
+/* Элемент категории в списке лимитов */
+.limit-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--light-gray);
+    cursor: pointer;
+}
+
+.limit-item:last-child {
+    border-bottom: none;
+}
+
+.limit-item__info {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.limit-item__dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.limit-item__name {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--dark);
+}
+
+.limit-item__rest {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--dark);
+}
+
+/* Цвета для штриховки: светлее базового */
+/* Будут использоваться в JS, но можно оставить переменные */
 
 /* Scrollbar styling */
 div::-webkit-scrollbar {
