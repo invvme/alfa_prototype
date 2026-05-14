@@ -8,12 +8,12 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
 </head>
-<body class="bg-gray-900 text-gray-900 flex items-center justify-center min-h-screen">
+<body class="bg-gray-900 text-white flex items-center justify-center min-h-screen">
     <!-- APP CONTAINER -->
     <div id="app" class="w-[380px] h-[700px] bg-white rounded-3xl shadow-2xl overflow-hidden relative">
         <div class="h-6 bg-red-200"></div>
 
-        <!-- LOGIN / SETUP (заглушки) -->
+        <!-- SCREENS -->
         <div id="screen-login" class="screen hidden p-6"><h1>Login</h1></div>
         <div id="screen-setup" class="screen hidden p-6"><h1>Setup</h1></div>
 
@@ -29,7 +29,7 @@
         <!-- HOME -->
         <div id="screen-home" class="screen p-6 flex flex-col h-full">
             <div class="flex justify-between items-center mb-2 flex-shrink-0">
-                <span class="text-xl font-bold" style="color: var(--dark);">Накопилка</span>
+                <div></div>
                 <button id="notifications_button" class="w-8 h-8 rounded-lg flex items-center justify-center" style="color: var(--dark);">🔔</button>
             </div>
             <div class="flex justify-center mb-4 flex-shrink-0">
@@ -63,7 +63,7 @@
             </div>
             <div class="flex-shrink-0">
                 <p class="text-xs mb-1" style="color: var(--gray);"><span id="goal_name">Цель</span>: <span id="goal_percent">0%</span></p>
-                <button id="goal_progress_button" class="w-full h-3 rounded-full overflow-hidden border-none p-0 cursor-pointer transition-all duration-200 hover:opacity-80" style="background-color: var(--lighter-gray);">
+                <button id="goal_progress_button" class="w-full h-3 rounded-full overflow-hidden border-none p-0 cursor-pointer" style="background-color: var(--lighter-gray);">
                     <div id="goal_fill" class="h-full w-0 rounded-full" style="background-color: var(--brandRed); transition: width 0.3s ease;"></div>
                 </button>
             </div>
@@ -76,6 +76,7 @@
                 {% include 'components/back_button.html' %}
                 <span id="goal_title" class="text-lg font-bold flex-grow" style="color: var(--dark);">Цель</span>
                 <button id="edit_goal_name_btn" class="w-8 h-8 rounded-lg" style="color: var(--gray);">✎</button>
+                <button id="edit_goal_target_btn" class="w-8 h-8 rounded-lg" style="color: var(--gray);">⚙️</button>
             </div>
             <div class="px-6 flex-shrink-0">
                 <p id="goal_balance" class="text-4xl font-bold mb-1" style="color: var(--dark);">0 ₽</p>
@@ -129,14 +130,13 @@
             {% include 'components/back_button.html' %}
             <h2 class="text-lg font-bold mb-4" style="color: var(--dark);">Друзья</h2>
             <div class="rounded-xl p-4 mb-4" style="background-color: var(--lighter-gray);">
-                <p class="font-bold mb-2" style="color: var(--dark);">🏆 Кто накопит быстрее</p>
-                <p style="color: var(--dark);">Вы: <span id="challenge_your_progress">0₽</span></p>
-                <p style="color: var(--dark);">Друг: <span id="challenge_friend_progress">0₽</span></p>
-                <p class="mt-1 font-semibold" id="challenge_leader" style="color: var(--dark);">Лидирует: --</p>
+                <p class="font-bold mb-2">🏆 Кто накопит быстрее</p>
+                <p>Вы: <span id="challenge_your_progress">0₽</span></p>
+                <p>Друг: <span id="challenge_friend_progress">0₽</span></p>
             </div>
             <div class="rounded-xl p-4" style="background-color: var(--lighter-gray);">
-                <p class="font-bold mb-2" style="color: var(--dark);">✈️ Совместная копилка (<span id="joint_target">100000₽</span>)</p>
-                <p style="color: var(--dark);">Собрано: <span id="joint_saved">0₽</span></p>
+                <p class="font-bold mb-2">✈️ Совместная копилка (<span id="joint_target">100000₽</span>)</p>
+                <p>Собрано: <span id="joint_saved">0₽</span></p>
                 <div class="flex gap-2 mt-2">
                     <button id="joint_deposit_btn" class="flex-1 h-10 rounded-xl text-sm" style="background-color: var(--dark); color: var(--bg);">Внести</button>
                     <button id="joint_withdraw_btn" class="flex-1 h-10 rounded-xl text-sm" style="background-color: var(--dark); color: var(--bg);">Вывести</button>
@@ -152,15 +152,14 @@
         </div>
     </div>
 
-    <!-- ========== MODALS ========== -->
-    <!-- Event modal -->
+    <!-- MODALS -->
     <div id="event_modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
         <div class="rounded-2xl p-6 w-[320px] max-h-[85vh] overflow-y-auto shadow-xl" style="background-color: var(--bg);">
             <h2 id="modal_title" class="text-lg font-bold mb-4" style="color: var(--dark);">Новый платёж</h2>
             <input id="event_name" placeholder="Название" class="w-full p-2 rounded-xl mb-3 border" style="border-color: var(--light-gray);">
             <div class="mb-3 flex gap-4">
-                <label style="color: var(--dark);"><input type="radio" name="event_type" value="one-time" checked> Разовый</label>
-                <label style="color: var(--dark);"><input type="radio" name="event_type" value="regular"> Регулярный</label>
+                <label><input type="radio" name="event_type" value="one-time" checked> Разовый</label>
+                <label><input type="radio" name="event_type" value="regular"> Регулярный</label>
             </div>
             <div id="one_time_fields"><input id="event_date" type="date" class="w-full p-2 rounded-xl mb-3 border" style="border-color: var(--light-gray);"></div>
             <div id="regular_fields" class="hidden">
@@ -183,7 +182,6 @@
         </div>
     </div>
 
-    <!-- Limit modal -->
     <div id="limit_modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
         <div class="rounded-2xl p-6 w-[320px] max-h-[85vh] overflow-y-auto shadow-xl" style="background-color: var(--bg);">
             <h2 class="text-lg font-bold mb-4" style="color: var(--dark);">Лимит категории</h2>
@@ -197,7 +195,6 @@
         </div>
     </div>
 
-    <!-- Category select modal -->
     <div id="category_select_modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
         <div class="rounded-2xl p-4 w-[320px] max-h-[85vh] shadow-xl flex flex-col" style="background-color: var(--bg);">
             <h2 class="text-lg font-bold mb-3 text-center" style="color: var(--dark);">Выберите категорию</h2>
@@ -206,10 +203,9 @@
         </div>
     </div>
 
-    <!-- Goal transaction modal -->
     <div id="goal_transaction_modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
         <div class="rounded-2xl p-6 w-[320px] shadow-xl" style="background-color: var(--bg);">
-            <h2 class="text-lg font-bold mb-4" style="color: var(--dark);">Перевод средств</h2>
+            <h2 id="transaction_title" class="text-lg font-bold mb-4" style="color: var(--dark);">Перевод средств</h2>
             <p id="transaction_balance" class="text-sm mb-2" style="color: var(--gray);"></p>
             <p id="transaction_saved" class="text-sm mb-4" style="color: var(--gray);"></p>
             <input id="transaction_amount" type="number" placeholder="Сумма" class="w-full p-2 rounded-xl mb-4 border" style="border-color: var(--light-gray);">
@@ -219,19 +215,6 @@
         </div>
     </div>
 
-    <!-- Joint transaction modal -->
-    <div id="joint_transaction_modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
-        <div class="rounded-2xl p-6 w-[320px] shadow-xl" style="background-color: var(--bg);">
-            <h2 class="text-lg font-bold mb-4" style="color: var(--dark);">Совместная копилка</h2>
-            <p id="joint_balance_info" class="text-sm mb-4" style="color: var(--gray);"></p>
-            <input id="joint_amount_input" type="number" placeholder="Сумма" class="w-full p-2 rounded-xl mb-4 border" style="border-color: var(--light-gray);">
-            <input type="hidden" id="joint_transaction_type">
-            <button id="joint_transaction_confirm" class="w-full py-2 rounded-xl font-bold" style="background-color: var(--brandRed); color: var(--bg);">Подтвердить</button>
-            <button id="joint_transaction_close" class="w-full mt-2 py-2 rounded-xl" style="background-color: var(--lighter-gray); color: var(--dark);">Отмена</button>
-        </div>
-    </div>
-
-    <!-- Auto top-up modal -->
     <div id="autotopup_modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
         <div class="rounded-2xl p-6 w-[320px] shadow-xl" style="background-color: var(--bg);">
             <h2 class="text-lg font-bold mb-4" style="color: var(--dark);">Автопополнение</h2>
@@ -248,90 +231,33 @@
         </div>
     </div>
 
-    <!-- Style modal -->
     <div id="style_modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
         <div class="rounded-2xl p-6 w-[320px] shadow-xl" style="background-color: var(--bg);">
             <h2 class="text-lg font-bold mb-4" style="color: var(--dark);">Стиль общения</h2>
-            <label class="block mb-1" style="color: var(--dark);"><input type="radio" name="comm_style" value="friendly"> Дружелюбный</label>
-            <label class="block mb-1" style="color: var(--dark);"><input type="radio" name="comm_style" value="business"> Деловой</label>
-            <label class="block mb-1" style="color: var(--dark);"><input type="radio" name="comm_style" value="motivational"> Мотивирующий</label>
-            <label class="block mb-1" style="color: var(--dark);"><input type="radio" name="comm_style" value="toxic"> Токсичный</label>
+            <label><input type="radio" name="comm_style" value="friendly"> Дружелюбный</label><br>
+            <label><input type="radio" name="comm_style" value="business"> Деловой</label><br>
+            <label><input type="radio" name="comm_style" value="motivational"> Мотивирующий</label><br>
+            <label><input type="radio" name="comm_style" value="toxic"> Токсичный</label>
             <button id="style_save" class="w-full mt-4 py-2 rounded-xl font-bold" style="background-color: var(--brandRed); color: var(--bg);">Выбрать</button>
             <button id="style_close" class="w-full mt-2 py-2 rounded-xl" style="background-color: var(--lighter-gray); color: var(--dark);">Отмена</button>
         </div>
     </div>
 
-    <!-- Edit goal modal -->
-    <div id="edit_goal_modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
-        <div class="rounded-2xl p-6 w-[320px] shadow-xl" style="background-color: var(--bg);">
-            <h2 class="text-lg font-bold mb-4" style="color: var(--dark);">Редактировать цель</h2>
-            <label class="text-xs" style="color: var(--dark);">Название</label>
-            <input id="edit_goal_name_input" class="w-full p-2 rounded-xl mb-3 border" style="border-color: var(--light-gray);">
-            <label class="text-xs" style="color: var(--dark);">Сумма (₽)</label>
-            <input id="edit_goal_target_input" type="number" class="w-full p-2 rounded-xl mb-3 border" style="border-color: var(--light-gray);">
-            <label class="text-xs" style="color: var(--dark);">Дедлайн (ГГГГ-ММ-ДД)</label>
-            <input id="edit_goal_deadline_input" type="date" class="w-full p-2 rounded-xl mb-4 border" style="border-color: var(--light-gray);">
-            <button id="save_goal_btn" class="w-full py-2 rounded-xl font-bold" style="background-color: var(--brandRed); color: var(--bg);">Сохранить</button>
-            <button id="cancel_goal_btn" class="w-full mt-2 py-2 rounded-xl" style="background-color: var(--lighter-gray); color: var(--dark);">Отмена</button>
+    <!-- АНКЕТА -->
+    <div id="questionnaire_overlay" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+        <div class="rounded-2xl p-6 w-[340px] max-h-[85vh] shadow-xl" style="background-color: var(--bg);">
+            <div id="questionnaire_content"></div>
         </div>
     </div>
 
-    <!-- Monthly stats modal -->
-    <div id="monthly_stats_modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
-        <div class="rounded-2xl p-6 w-[320px] max-h-[85vh] overflow-y-auto shadow-xl" style="background-color: var(--bg);">
-            <h2 id="monthly_stats_title" class="text-lg font-bold mb-4" style="color: var(--dark);">Статистика за месяц</h2>
-            <div id="monthly_stats_content" style="color: var(--dark); font-size: 0.9rem;"></div>
-            <button id="monthly_stats_close" class="w-full mt-4 py-2 rounded-xl font-bold" style="background-color: var(--brandRed); color: var(--bg);">Понятно</button>
-        </div>
-    </div>
-
-    <!-- Goal achieved overlay -->
-    <div id="goal_achieved_modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] hidden">
-        <div class="rounded-2xl p-6 w-[320px] shadow-xl text-center" style="background-color: var(--bg);">
-            <p id="achievement_message" class="text-xl font-bold mb-4" style="color: var(--dark);">Цель достигнута! 🎉</p>
-            <button id="new_goal_btn" class="px-6 py-3 rounded-xl font-bold text-lg" style="background-color: var(--brandRed); color: var(--bg);">Хочу новую цель</button>
-        </div>
-    </div>
-
-    <!-- Тестовый блок для трат (справа от приложения) -->
-    <div id="test_spend_panel" class="hidden fixed top-1/2 left-1/2 transform -translate-y-1/2 ml-[200px] z-[60] bg-white p-4 rounded-2xl shadow-xl w-64" style="background-color: var(--bg);">
-        <div class="flex justify-between items-center mb-2">
-            <h3 class="font-bold" style="color: var(--dark);">Тестовая трата</h3>
-            <button id="close_test_spend" class="w-6 h-6 rounded-full flex items-center justify-center" style="background-color: var(--light-gray); color: var(--dark); font-size: 14px;">✕</button>
-        </div>
-        <select id="spend_category_select" class="w-full p-2 rounded-xl mb-2 border" style="border-color: var(--light-gray);"></select>
-        <input id="spend_amount_input" type="number" placeholder="Сумма" class="w-full p-2 rounded-xl mb-2 border" style="border-color: var(--light-gray);">
-        <button id="spend_confirm_btn" class="w-full py-2 rounded-xl font-bold" style="background-color: var(--brandRed); color: var(--bg);">Потратить</button>
-    </div>
-
-    <!-- Чат-анкета (оверлей на весь экран) -->
-    <div id="questionnaire_overlay" class="fixed inset-0 z-50 hidden" style="background-color: var(--bg);">
-        <div class="w-full h-full flex flex-col p-4">
-            <div id="chat_history" class="flex-grow overflow-y-auto mb-3 space-y-2 pr-1" style="color: var(--dark);"></div>
-            <div id="chat_input_area" class="flex-shrink-0 flex items-end gap-2">
-                <input type="number" id="chat_input_number" placeholder="Введите число" class="hidden flex-grow p-2 rounded-xl border" style="border-color: var(--light-gray);">
-                <input type="date" id="chat_input_date" class="hidden flex-grow p-2 rounded-xl border" style="border-color: var(--light-gray);">
-                <div id="chat_buttons" class="flex flex-wrap gap-2 flex-grow"></div>
-                <button id="chat_send_btn" class="hidden h-10 w-10 rounded-xl flex items-center justify-center" style="background-color: var(--brandRed); color: var(--bg);">→</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Кнопка тестирования (огромная, с белой рамкой) -->
-    <button id="debug_toggle" class="fixed top-1/2 left-4 transform -translate-y-1/2 z-[60] w-20 h-20 bg-gray-700 text-white rounded-full flex items-center justify-center text-3xl shadow-lg border-2 border-white">🛠️</button>
-    <!-- Дебаг-панель (появляется при нажатии кнопки тестирования) -->
-    <div id="debug_panel" class="hidden fixed top-1/2 left-28 transform -translate-y-1/2 z-[60] bg-gray-800 p-4 rounded-xl text-white text-sm w-56">
+    <!-- ДЕБАГ-ПАНЕЛЬ (вне телефона) -->
+    <div id="debug_panel" class="fixed bottom-4 right-4 z-[60] hidden bg-gray-800 p-4 rounded-xl text-white text-sm">
         <button id="debug_add_money" class="block w-full mb-2 px-4 py-2 bg-green-600 rounded">💰 Добавить денег</button>
         <button id="debug_spend_money" class="block w-full mb-2 px-4 py-2 bg-red-600 rounded">💸 Потратить на категорию</button>
         <button id="debug_new_month" class="block w-full mb-2 px-4 py-2 bg-blue-600 rounded">📅 Новый месяц</button>
         <button id="debug_reset" class="block w-full px-4 py-2 bg-gray-600 rounded">⚠️ Сбросить всё</button>
     </div>
-    <!-- Модальное окно превышения лимита -->
-    <div id="limit_warning_modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
-        <div class="rounded-2xl p-6 w-[320px] shadow-xl text-center" style="background-color: var(--bg);">
-            <p id="limit_warning_text" style="color: var(--dark); font-size: 0.95rem;"></p>
-            <button id="close_limit_warning" class="w-full mt-4 py-2 rounded-xl font-bold" style="background-color: var(--brandRed); color: var(--bg);">Понятно</button>
-        </div>
-    </div>
+    <button id="debug_toggle" class="fixed bottom-4 left-4 z-[60] w-10 h-10 bg-gray-700 text-white rounded-full flex items-center justify-center">🛠️</button>
+
 </body>
 </html>

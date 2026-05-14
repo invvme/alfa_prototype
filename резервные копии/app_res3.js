@@ -1,12 +1,12 @@
 // ========== ЕДИНАЯ БАЗА ДАННЫХ ==========
 const DEFAULT_USER_DATA = {
   setupCompleted: false,
-  communicationStyle: 'friendly',
+  communicationStyle: 'friendly', // friendly | business | motivational | toxic
   personalBalance: 100000,
   totalSpent: 0,
   monthlySpent: 0,
   monthlyProgress: 0,
-  prevGoalPercent: 0,
+  prevGoalPercent: 0, // для расчёта прогресса за месяц
   goal: {
     name: 'Подушка безопасности',
     target: 100000,
@@ -16,7 +16,8 @@ const DEFAULT_USER_DATA = {
     interestRate: 13.5
   },
   categoriesLimits: [
-    { id: 0, limit: 0, spent: 0 } // "Потрачено"
+    // id:0 теперь "Потрачено" – скрытая категория, лимит не задаётся
+    { id: 0, limit: 0, spent: 0 }
   ],
   autoTopUp: {
     enabled: false,
@@ -32,7 +33,6 @@ const DEFAULT_USER_DATA = {
     friendProgress: 0,
     jointGoal: { target: 100000, saved: 0 }
   },
-  lastMonthStats: null,
   lastMonthReset: new Date().toISOString()
 };
 
@@ -59,7 +59,8 @@ const CATEGORIES_CONFIG = [
   { id: 6, name: 'Супермаркеты', colorVar: '--limitscolor6' },
   { id: 7, name: 'Здоровье', colorVar: '--limitscolor7' },
   { id: 8, name: 'Бизнес-траты', colorVar: '--limitscolor8' },
-  { id: 9, name: 'Транспорт', colorVar: '--limitscolor9' }
+  { id: 9, name: 'Транспорт', colorVar: '--limitscolor9' },
+  // "Потрачено" id=0 скрыто
 ];
 
 const CATEGORY_ICONS = {
@@ -87,6 +88,7 @@ function switchScreen(screenId) {
   if (screenId === 'screen-goals') updateGoalsScreen();
   if (screenId === 'screen-notifications') renderNotifications();
   if (screenId === 'screen-friends') updateFriendsScreen();
+  if (screenId === 'screen-goal-achieved') checkGoalAchievement();
 }
 
 // ========== ГЛАВНЫЙ ЭКРАН ==========
@@ -110,62 +112,40 @@ function updateFinanceBlocks() {
   const percent = g.saved / g.target * 100;
   document.getElementById('goal_percent').textContent = Math.min(100, Math.round(percent)) + '%';
   document.getElementById('goal_fill').style.width = Math.min(100, percent) + '%';
-  document.getElementById('spent_amount').textContent = ud.monthlySpent.toLocaleString() + ' ₽'; // теперь месячное
+  document.getElementById('spent_amount').textContent = ud.totalSpent.toLocaleString() + ' ₽';
   document.getElementById('saved_amount').textContent = g.saved.toLocaleString() + ' ₽';
+  // Прогресс в этом месяце: разница между текущим процентом и процентом на начало месяца
   const currentPercent = g.target > 0 ? g.saved / g.target * 100 : 0;
   const diff = currentPercent - (ud.prevGoalPercent || 0);
-  const progressEl = document.getElementById('monthly_progress');
-  progressEl.textContent = (diff >= 0 ? '+' : '') + diff.toFixed(1) + '%';
-  progressEl.style.color = diff >= 0 ? 'var(--green)' : 'var(--brandRed)';
+  document.getElementById('monthly_progress').textContent = (diff >= 0 ? '+' : '') + diff.toFixed(1) + '%';
   document.getElementById('target_date').textContent = g.deadline ? new Date(g.deadline).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' }) : '--';
 }
 
 // ========== КОЛЕСО ЛИМИТОВ ==========
 function drawWheel() {
   const ud = loadUserData();
+  // Для колеса используем только категории с лимитом >0, исключая id 0 (Потрачено)
   const categories = ud.categoriesLimits.filter(c => c.limit > 0 && c.id !== 0);
-  const potracheno = ud.categoriesLimits.find(c => c.id === 0);
-  const totalLimit = categories.reduce((s, c) => s + c.limit, 0);
-  const totalSpent = potracheno ? potracheno.spent : 0;
   const svg = document.getElementById('wheel_svg');
   if (!svg) return;
-  if (categories.length === 0 && totalSpent === 0) {
+  if (categories.length === 0) {
     svg.innerHTML = `<circle cx="144" cy="144" r="120" fill="none" stroke="var(--light-gray)" stroke-width="30" />`;
     document.getElementById('wheel_categories').innerHTML = '<span style="color: var(--gray);">Нет категорий</span>';
     return;
   }
-
+  const totalLimit = categories.reduce((s, c) => s + c.limit, 0);
+  let cumulativeAngle = 0;
   const radius = 120, stroke = 30, center = 144, circ = 2 * Math.PI * radius;
   let defsHtml = '', circlesHtml = '';
-  let cumulativeAngle = 0;
-
-  // Сначала рисуем серый сегмент "Потрачено", если есть траты
-  const spentAngle = totalLimit > 0 ? (Math.min(totalSpent, totalLimit) / totalLimit) * 360 : 0;
-  if (spentAngle > 0) {
-    const dashArray = (Math.min(totalSpent, totalLimit) / totalLimit) * circ;
+  categories.forEach(cat => {
+    const color = getCategoryColor(cat.id);
+    const limitAngle = (cat.limit / totalLimit) * 360;
+    const dashArray = (cat.limit / totalLimit) * circ;
     const dashOffset = -cumulativeAngle * (circ / 360);
-    circlesHtml += `<circle cx="${center}" cy="${center}" r="${radius}" fill="none" stroke="var(--limitscolor0)" stroke-width="${stroke}" stroke-dasharray="${dashArray} ${circ}" stroke-dashoffset="${dashOffset}" transform="rotate(-90, ${center}, ${center})" opacity="0.7"/>`;
-    cumulativeAngle += spentAngle;
-  }
-
-  // Затем категории (оставшиеся лимиты)
-  const remainingTotal = totalLimit - totalSpent;
-  if (remainingTotal > 0) {
-    categories.forEach(cat => {
-      const remaining = Math.max(0, cat.limit - cat.spent);
-      if (remaining > 0) {
-        const color = getCategoryColor(cat.id);
-        const dashArray = (remaining / totalLimit) * circ; // от общей суммы лимитов, чтобы сегменты были пропорциональны исходным лимитам
-        const dashOffset = -cumulativeAngle * (circ / 360);
-        circlesHtml += `<circle cx="${center}" cy="${center}" r="${radius}" fill="none" stroke="${color}" stroke-width="${stroke}" stroke-dasharray="${dashArray} ${circ}" stroke-dashoffset="${dashOffset}" transform="rotate(-90, ${center}, ${center})" opacity="0.85"/>`;
-        cumulativeAngle += (remaining / totalLimit) * 360;
-      }
-    });
-  }
-
+    circlesHtml += `<circle cx="${center}" cy="${center}" r="${radius}" fill="none" stroke="${color}" stroke-width="${stroke}" stroke-dasharray="${dashArray} ${circ}" stroke-dashoffset="${dashOffset}" transform="rotate(-90, ${center}, ${center})" opacity="0.85"/>`;
+    cumulativeAngle += limitAngle;
+  });
   svg.innerHTML = `<defs>${defsHtml}</defs>${circlesHtml}`;
-
-  // Центр: показываем категории и предупреждения
   const centerDiv = document.getElementById('wheel_categories');
   let html = '<div class="grid grid-cols-2 gap-x-2 gap-y-2 w-full">';
   categories.forEach(cat => {
@@ -177,13 +157,6 @@ function drawWheel() {
       <span class="text-[10px] leading-tight font-medium truncate" style="color: var(--dark);">${getCategoryById(cat.id)?.name || '—'}</span>
     </div>`;
   });
-  // Добавим строку "Потрачено" в центре, если есть траты
-  if (totalSpent > 0) {
-    html += `<div class="flex items-center gap-1 col-span-2 mt-1">
-      <div class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background-color: var(--limitscolor0);"></div>
-      <span class="text-[10px] leading-tight font-medium" style="color: var(--dark);">Потрачено: ${totalSpent.toLocaleString()} ₽</span>
-    </div>`;
-  }
   html += '</div>';
   centerDiv.innerHTML = html;
 }
@@ -192,6 +165,7 @@ function drawWheel() {
 function renderLimitsList() {
   const ud = loadUserData();
   const container = document.getElementById('limits_list');
+  // Показываем категории с лимитом >0, кроме id 0 (Потрачено)
   const active = ud.categoriesLimits.filter(c => c.limit > 0 && c.id !== 0);
   if (active.length === 0) {
     container.innerHTML = '<p class="text-sm py-4" style="color: var(--gray);">Нет установленных лимитов</p>';
@@ -227,7 +201,7 @@ function openLimitModal(isNew, catId = null) {
     return;
   } else {
     const cat = ud.categoriesLimits.find(c => c.id === catId);
-    if (!cat || cat.id === 0) return;
+    if (!cat || cat.id === 0) return; // нельзя редактировать "Потрачено"
     editingCategoryId = catId;
     document.getElementById('limit_category_name').textContent = getCategoryById(catId)?.name || '';
     document.getElementById('limit_value').value = cat.limit;
@@ -235,6 +209,7 @@ function openLimitModal(isNew, catId = null) {
   }
   document.getElementById('limit_modal').classList.remove('hidden');
 }
+
 function closeLimitModal() { document.getElementById('limit_modal').classList.add('hidden'); editingCategoryId = null; }
 function saveLimitChanges() {
   const newLimit = parseFloat(document.getElementById('limit_value').value);
@@ -256,14 +231,14 @@ function deleteLimitCategory() {
   if (editingCategoryId === null) return;
   let ud = loadUserData();
   const cat = ud.categoriesLimits.find(c => c.id === editingCategoryId);
-  if (cat) cat.limit = 0;
+  if (cat) cat.limit = 0; // убираем лимит, spent остаётся
   saveUserData(ud);
   closeLimitModal();
   renderLimitsList();
   drawWheel();
 }
 
-// ========== ВЫБОР КАТЕГОРИИ ==========
+// ========== ВЫБОР КАТЕГОРИИ (модалка) ==========
 let selectedCategoryId = null;
 function openCategorySelectModal() {
   const ud = loadUserData();
@@ -277,7 +252,7 @@ function openCategorySelectModal() {
   available.forEach(cat => {
     const el = document.createElement('div');
     el.className = 'flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer';
-    el.style.backgroundColor = 'var(--lighter-gray)';
+    el.style.backgroundColor = 'var(--lighter-gray)'; // все светло-серые
     el.style.color = 'var(--dark)';
     el.innerHTML = `<span class="text-lg">${CATEGORY_ICONS[cat.id] || '📁'}</span><span>${cat.name}</span>`;
     el.onclick = () => {
@@ -446,8 +421,8 @@ function saveGoalChanges() {
 function openGoalTransactionModal(type) {
   const ud = loadUserData();
   document.getElementById('transaction_type').value = type;
-  document.getElementById('transaction_balance').textContent = 'Баланс: ' + ud.personalBalance.toLocaleString() + ' ₽ (неограничен)';
-  document.getElementById('transaction_saved').textContent = 'В копилке: ' + ud.goal.saved.toLocaleString() + ' ₽';
+  document.getElementById('transaction_balance').textContent = ud.personalBalance.toLocaleString() + ' ₽ (доступно)';
+  document.getElementById('transaction_saved').textContent = ud.goal.saved.toLocaleString() + ' ₽ (в копилке)';
   document.getElementById('transaction_amount').value = '';
   document.getElementById('goal_transaction_modal').classList.remove('hidden');
 }
@@ -458,6 +433,7 @@ function performGoalTransaction() {
   if (isNaN(amount) || amount <= 0) return alert('Введите сумму');
   let ud = loadUserData();
   if (type === 'deposit') {
+    if (ud.personalBalance < amount) return alert('Недостаточно средств на счёте');
     ud.personalBalance -= amount;
     ud.goal.saved += amount;
   } else {
@@ -475,6 +451,8 @@ function performGoalTransaction() {
 function checkGoalAchievement() {
   const ud = loadUserData();
   if (ud.goal.saved >= ud.goal.target && ud.goal.target > 0) {
+    switchScreen('screen-goal-achieved');
+    // Покажем сообщение в стиле общения
     const style = ud.communicationStyle;
     const messages = {
       friendly: '🎉 Ура! Твоя цель достигнута! Ты большой молодец! Хочешь поставить новую цель?',
@@ -483,17 +461,13 @@ function checkGoalAchievement() {
       toxic: 'Ну наконец-то! Смог. Может, теперь новую цель поставишь, или опять лениться?'
     };
     document.getElementById('achievement_message').textContent = messages[style] || messages.friendly;
-    document.getElementById('goal_achieved_modal').classList.remove('hidden');
   }
 }
 function startNewGoal() {
   let ud = loadUserData();
   ud.goal.saved = 0;
-  ud.prevGoalPercent = 0;
-  ud.notifications = [];
-  ud.setupCompleted = false;
+  ud.setupCompleted = false; // запустит анкету заново
   saveUserData(ud);
-  document.getElementById('goal_achieved_modal').classList.add('hidden');
   switchScreen('screen-home');
   startQuestionnaire();
 }
@@ -538,42 +512,33 @@ function saveCommunicationStyle() {
 // ========== ЭКРАН ДРУЗЕЙ ==========
 function updateFriendsScreen() {
   const ud = loadUserData();
-  document.getElementById('challenge_your_progress').textContent = ud.goal.saved.toLocaleString() + '₽';
+  document.getElementById('challenge_your_progress').textContent = ud.challenges.yourProgress.toLocaleString() + '₽';
   document.getElementById('challenge_friend_progress').textContent = ud.challenges.friendProgress.toLocaleString() + '₽';
-  const your = ud.goal.saved, friend = ud.challenges.friendProgress;
+  const your = ud.challenges.yourProgress, friend = ud.challenges.friendProgress;
   const leader = your > friend ? 'Вы' : (friend > your ? 'Друг' : 'Ничья');
   document.getElementById('challenge_leader').textContent = 'Лидирует: ' + leader;
   document.getElementById('joint_saved').textContent = ud.challenges.jointGoal.saved.toLocaleString() + '₽';
   document.getElementById('joint_target').textContent = ud.challenges.jointGoal.target.toLocaleString() + '₽';
 }
-
-// Совместная копилка: открыть модалку
-function openJointTransactionModal(type) {
-  const ud = loadUserData();
-  document.getElementById('joint_transaction_type').value = type;
-  document.getElementById('joint_balance_info').textContent = type === 'deposit' 
-    ? 'Ваш баланс: ' + ud.personalBalance.toLocaleString() + ' ₽ (неограничен)' 
-    : 'В копилке: ' + ud.challenges.jointGoal.saved.toLocaleString() + ' ₽';
-  document.getElementById('joint_amount_input').value = '';
-  document.getElementById('joint_transaction_modal').classList.remove('hidden');
-}
-function closeJointTransactionModal() { document.getElementById('joint_transaction_modal').classList.add('hidden'); }
-function performJointTransaction() {
-  const type = document.getElementById('joint_transaction_type').value;
-  const amount = parseFloat(document.getElementById('joint_amount_input').value);
-  if (isNaN(amount) || amount <= 0) return alert('Введите сумму');
+function contributeJoint(amountStr) {
+  const amount = parseFloat(amountStr);
+  if (isNaN(amount) || amount <= 0) return alert('Неверная сумма');
   let ud = loadUserData();
-  if (type === 'deposit') {
-    ud.personalBalance -= amount;
-    ud.challenges.jointGoal.saved += amount;
-  } else {
-    if (ud.challenges.jointGoal.saved < amount) return alert('Недостаточно средств в копилке');
-    ud.challenges.jointGoal.saved -= amount;
-    ud.personalBalance += amount;
-  }
+  if (ud.personalBalance < amount) return alert('Недостаточно средств');
+  ud.personalBalance -= amount;
+  ud.challenges.jointGoal.saved += amount;
   saveUserData(ud);
   updateFriendsScreen();
-  closeJointTransactionModal();
+}
+function withdrawJoint(amountStr) {
+  const amount = parseFloat(amountStr);
+  if (isNaN(amount) || amount <= 0) return alert('Неверная сумма');
+  let ud = loadUserData();
+  if (ud.challenges.jointGoal.saved < amount) return alert('Недостаточно средств в копилке');
+  ud.challenges.jointGoal.saved -= amount;
+  ud.personalBalance += amount;
+  saveUserData(ud);
+  updateFriendsScreen();
 }
 
 // ========== УВЕДОМЛЕНИЯ ==========
@@ -596,17 +561,17 @@ function renderNotifications() {
   });
 }
 
+// Показ статистики за месяц (модалка)
 function showMonthlyStats() {
   const ud = loadUserData();
-  const stats = ud.lastMonthStats;
-  if (!stats) return;
-  let statsHtml = `<p class="mb-2"><strong>Потрачено за месяц:</strong> ${stats.spent.toLocaleString()} ₽</p>`;
-  statsHtml += `<p class="mb-2"><strong>Накоплено:</strong> ${ud.goal.saved.toLocaleString()} ₽</p>`;
-  statsHtml += `<p class="mb-2"><strong>Прогресс копилки:</strong> ${(ud.goal.saved / ud.goal.target * 100).toFixed(1)}%</p>`;
-  statsHtml += `<p class="mb-2"><strong>Осталось накопить:</strong> ${Math.max(0, ud.goal.target - ud.goal.saved).toLocaleString()} ₽</p>`;
-  if (stats.limits && stats.limits.length > 0) {
+  const lastCat = ud.categoriesLimits.filter(c => c.id !== 0);
+  let statsHtml = '<p class="mb-2"><strong>Потрачено за месяц:</strong> ' + (ud.monthlySpent || 0).toLocaleString() + ' ₽</p>';
+  statsHtml += '<p class="mb-2"><strong>Накоплено:</strong> ' + ud.goal.saved.toLocaleString() + ' ₽</p>';
+  statsHtml += '<p class="mb-2"><strong>Прогресс копилки:</strong> ' + (ud.goal.saved / ud.goal.target * 100).toFixed(1) + '%</p>';
+  statsHtml += '<p class="mb-2"><strong>Осталось накопить:</strong> ' + Math.max(0, ud.goal.target - ud.goal.saved).toLocaleString() + ' ₽</p>';
+  if (lastCat.length > 0) {
     statsHtml += '<p class="mt-2 font-semibold">Лимиты:</p>';
-    stats.limits.forEach(c => {
+    lastCat.forEach(c => {
       const cfg = getCategoryById(c.id);
       statsHtml += `<p>${cfg?.name || 'Категория'}: ${c.spent} / ${c.limit} ₽ `;
       if (c.spent > c.limit) statsHtml += '<span style="color:red;">превышен!</span>';
@@ -614,10 +579,8 @@ function showMonthlyStats() {
       statsHtml += '</p>';
     });
   }
-  const diff = stats.progressDiff || 0;
-  statsHtml += `<p class="mt-2"><strong>Прогресс за этот месяц:</strong> ${(diff >= 0 ? '+' : '') + diff.toFixed(1)}%</p>`;
-
   document.getElementById('monthly_stats_content').innerHTML = statsHtml;
+  // Заголовок в стиле общения
   const style = ud.communicationStyle;
   const titles = {
     friendly: 'Ты отлично поработал в этом месяце! Вот твои успехи:',
@@ -642,16 +605,16 @@ function debugAddMoney() {
     }
     saveUserData(ud);
     alert('Баланс пополнен');
-    checkGoalAchievement();
   }
 }
 function debugSpendMoney() {
+  // Показываем панель выбора категории
   const select = document.getElementById('spend_category_select');
   select.innerHTML = '';
   CATEGORIES_CONFIG.forEach(c => {
     const opt = document.createElement('option');
     opt.value = c.id;
-    opt.textContent = c.name;
+    opt.textContent = c.name + (c.id === 0 ? ' (общая)' : '');
     select.appendChild(opt);
   });
   document.getElementById('spend_amount_input').value = '';
@@ -665,68 +628,27 @@ function performTestSpend() {
   ud.personalBalance -= amount;
   ud.totalSpent += amount;
   ud.monthlySpent += amount;
-
-  // Категория "Потрачено" (id 0)
+  // Увеличиваем потрачено для категории "Потрачено" (id 0) если трата на любую категорию с лимитом
   const potracheno = ud.categoriesLimits.find(c => c.id === 0);
   if (potracheno) potracheno.spent += amount;
   else ud.categoriesLimits.push({ id: 0, limit: 0, spent: amount });
 
-  // Если трата по конкретной категории (не 0)
+  // Если трата по категории с лимитом (не 0), увеличиваем spent у этой категории
   if (catId !== 0) {
     let cat = ud.categoriesLimits.find(c => c.id === catId);
-    if (cat) {
-      const newSpent = cat.spent + amount;
-      if (cat.limit > 0 && newSpent > cat.limit) {
-        // Показываем предупреждение в стиле общения
-        showLimitWarning(cat, amount, ud.communicationStyle);
-      }
-      cat.spent = newSpent;
-    } else if (getCategoryById(catId)) {
-      const newCat = { id: catId, limit: 0, spent: amount };
-      ud.categoriesLimits.push(newCat);
-      // Если лимит не задан, предупреждения нет
-    }
+    if (cat) cat.spent += amount;
+    else if (getCategoryById(catId)) { ud.categoriesLimits.push({ id: catId, limit: 0, spent: amount }); }
   }
-
   if (ud.autoTopUp.enabled && ud.autoTopUp.type === 'percentOfExpense') {
     const topUp = Math.min(amount * ud.autoTopUp.percent / 100, ud.autoTopUp.maxAmount || Infinity);
     ud.goal.saved += topUp;
   }
-
   saveUserData(ud);
   updateFinanceBlocks(); drawWheel(); renderLimitsList();
   document.getElementById('test_spend_panel').classList.add('hidden');
   checkGoalAchievement();
   alert('Расход учтён');
 }
-
-function showLimitWarning(cat, amount, style) {
-  const cfg = getCategoryById(cat.id);
-  const limit = cat.limit;
-  const spent = cat.spent;
-  const newTotal = spent + amount;
-  const overPercent = ((newTotal - limit) / limit * 100).toFixed(0);
-  let msg = '';
-  switch (style) {
-    case 'friendly':
-      msg = `😟 Ой! Трата на «${cfg.name}» в ${amount} ₽ превысит лимит на ${overPercent}%. Может, стоит пересмотреть?`;
-      break;
-    case 'business':
-      msg = `Внимание: данный расход по категории «${cfg.name}» приведёт к превышению лимита на ${overPercent}%. Рекомендуется скорректировать бюджет.`;
-      break;
-    case 'motivational':
-      msg = `Ты почти у цели! Но трата ${amount} ₽ на «${cfg.name}» выходит за рамки лимита (+${overPercent}%). Давай найдём баланс!`;
-      break;
-    case 'toxic':
-      msg = `Серьёзно? Ещё ${amount} ₽ на «${cfg.name}»? Лимит уже превышен на ${overPercent}%. Может, хватит?`;
-      break;
-    default:
-      msg = `Превышение лимита по категории «${cfg.name}» на ${overPercent}%.`;
-  }
-  document.getElementById('limit_warning_text').textContent = msg;
-  document.getElementById('limit_warning_modal').classList.remove('hidden');
-}
-
 function debugResetAll() {
   if (confirm('Удалить ВСЕ данные? Это действие необратимо.')) {
     localStorage.clear();
@@ -735,44 +657,21 @@ function debugResetAll() {
 }
 function debugNewMonth() {
   let ud = loadUserData();
-  // 1. Вычисляем прогресс за прошедший месяц
-  const oldPrev = ud.prevGoalPercent || 0;
-  const currentPercent = ud.goal.target > 0 ? ud.goal.saved / ud.goal.target * 100 : 0;
-  const progressDiff = currentPercent - oldPrev;
-  
-  // 2. Сохраняем статистику до сброса
-  const monthSpent = ud.monthlySpent;
-  const limitsCopy = JSON.parse(JSON.stringify(ud.categoriesLimits.filter(c => c.id !== 0)));
-  ud.lastMonthStats = {
-    spent: monthSpent,
-    limits: limitsCopy,
-    progressDiff: progressDiff   // ← сохраняем прогресс
-  };
-  
-  // 3. Обновляем prevGoalPercent для следующего месяца
-  ud.prevGoalPercent = currentPercent;
-  
-  // 4. Сбрасываем траты
+  // Запоминаем процент до сброса
+  ud.prevGoalPercent = ud.goal.target > 0 ? ud.goal.saved / ud.goal.target * 100 : 0;
   ud.monthlySpent = 0;
+  ud.monthlyProgress = 0;
   ud.categoriesLimits.forEach(c => c.spent = 0);
-  
-  // 5. Обновляем уведомление (только одно)
-  const existingNotif = ud.notifications.find(n => n.type === 'monthly_stats');
-  if (existingNotif) {
-    existingNotif.date = new Date().toLocaleDateString('ru-RU');
-    existingNotif.read = false;   // точка снова красная
-  } else {
-    ud.notifications.unshift({
-      id: Date.now().toString(),
-      title: 'Статистика за прошлый месяц',
-      date: new Date().toLocaleDateString('ru-RU'),
-      read: false,
-      type: 'monthly_stats'
-    });
-  }
-  
+  // Добавляем уведомление
+  ud.notifications.unshift({
+    id: Date.now().toString(),
+    title: 'Статистика за прошлый месяц',
+    date: new Date().toLocaleDateString('ru-RU'),
+    read: false,
+    type: 'monthly_stats'
+  });
   saveUserData(ud);
-  showMonthlyStats();   // показываем сразу
+  showMonthlyStats(); // сразу показываем статистику
   updateFinanceBlocks(); drawWheel(); renderLimitsList();
   alert('Новый месяц начался!');
 }
@@ -789,10 +688,9 @@ const chatQuestions = [
     ] },
   { field: 'income', text: { friendly: 'Какой у тебя ежемесячный доход? 💰', business: 'Укажите ваш ежемесячный доход.', motivational: 'Сколько ты зарабатываешь? Это будет твоим топливом!', toxic: 'И сколько ты там получаешь? Не стесняйся.' }, type: 'number' },
   { field: 'goalTarget', text: { friendly: 'Сколько хочешь накопить? 🎯', business: 'Введите сумму цели.', motivational: 'Какую вершину покорим? Сколько нужно накопить?', toxic: 'Ну и сколько тебе надо? Миллион? Ага, конечно.' }, type: 'number' },
-  { field: 'goalName', text: { friendly: 'А как назовём твою цель? 💰', business: 'Укажите название цели.', motivational: 'Дай своей цели крутое имя!', toxic: 'Название-то какое дадим? Не «Хотелка» же.' }, type: 'text' },
   { field: 'deadline', text: { friendly: 'К какому сроку планируешь накопить? (выбери дату)', business: 'Крайний срок накопления:', motivational: 'Когда ты хочешь достичь цели?', toxic: 'Дедлайн? Или опять всё растянется?' }, type: 'date' },
   { field: 'categories', text: { friendly: 'Какие категории расходов у тебя основные? (можно несколько)', business: 'Выберите основные статьи расходов.', motivational: 'На что ты обычно тратишь? Выбери главные категории.', toxic: 'Ну и куда деньги уходят? Отмечай.' }, type: 'multi' },
-  { field: 'autotopup', text: { friendly: 'Хочешь настроить автопополнение?', business: 'Выберите способ автопополнения.', motivational: 'Автоматизируем накопления! Как будем пополнять?', toxic: 'Автопополнение? Может, хоть что-то само будет откладываться.' },
+  { field: 'autotopup', text: { friendly: 'Хочешь настроить автопополнение?', business: 'Выберите способ автопополнения.', motivational: 'Автоматизируем накопления! Как будем пополнять?', toxic: 'Автопополнение? Может, хоть что-то само будет откладываться, раз сам не можешь.' },
     options: [
       { value: 'percentOfExpense', label: '% от расходов' },
       { value: 'percentOfIncome', label: '% от доходов' },
@@ -800,7 +698,6 @@ const chatQuestions = [
       { value: 'none', label: 'Отключить' }
     ] }
 ];
-
 function startQuestionnaire() {
   const ud = loadUserData();
   if (ud.setupCompleted) return;
@@ -810,7 +707,6 @@ function startQuestionnaire() {
   document.getElementById('chat_history').innerHTML = '';
   processChatStep();
 }
-
 function addChatMessage(text, isBot = true) {
   const history = document.getElementById('chat_history');
   const div = document.createElement('div');
@@ -821,7 +717,6 @@ function addChatMessage(text, isBot = true) {
   history.appendChild(div);
   history.scrollTop = history.scrollHeight;
 }
-
 function processChatStep() {
   if (chatStep >= chatQuestions.length) { finishQuestionnaire(); return; }
   const q = chatQuestions[chatStep];
@@ -832,12 +727,9 @@ function processChatStep() {
   const numInput = document.getElementById('chat_input_number');
   const dateInput = document.getElementById('chat_input_date');
   const buttonsDiv = document.getElementById('chat_buttons');
-  const sendBtn = document.getElementById('chat_send_btn');
   numInput.classList.add('hidden');
   dateInput.classList.add('hidden');
   buttonsDiv.innerHTML = '';
-  sendBtn.classList.add('hidden');
-
   if (q.options) {
     q.options.forEach(opt => {
       const btn = document.createElement('button');
@@ -855,45 +747,41 @@ function processChatStep() {
     });
   } else if (q.type === 'number') {
     numInput.classList.remove('hidden');
-    sendBtn.classList.remove('hidden');
-    sendBtn.onclick = () => {
-      const val = numInput.value;
-      if (val.trim() === '') return;
-      addChatMessage(val, false);
-      window.questionnaireAnswers[q.field] = val;
-      numInput.value = '';
-      chatStep++;
-      processChatStep();
-    };
-  } else if (q.type === 'text') {
-    // создаём поле ввода
-    const textInput = document.createElement('input');
-    textInput.type = 'text';
-    textInput.placeholder = 'Введи название';
-    textInput.className = 'flex-grow p-2 rounded-xl border';
-    textInput.style.borderColor = 'var(--light-gray)';
-    buttonsDiv.appendChild(textInput);
-    sendBtn.classList.remove('hidden');
-    sendBtn.onclick = () => {
-      const val = textInput.value.trim();
-      if (!val) return;
-      addChatMessage(val, false);
-      window.questionnaireAnswers[q.field] = val;
-      chatStep++;
-      processChatStep();
+    numInput.focus();
+    numInput.onkeydown = (e) => {
+      if (e.key === 'Enter') {
+        const val = numInput.value;
+        addChatMessage(val, false);
+        window.questionnaireAnswers[q.field] = val;
+        numInput.value = '';
+        chatStep++;
+        processChatStep();
+      }
     };
   } else if (q.type === 'date') {
     dateInput.classList.remove('hidden');
-    sendBtn.classList.remove('hidden');
-    sendBtn.onclick = () => {
+    dateInput.focus();
+    dateInput.onchange = () => {
       const val = dateInput.value;
-      if (!val) return;
       addChatMessage(val, false);
       window.questionnaireAnswers[q.field] = val;
       chatStep++;
       processChatStep();
     };
   } else if (q.type === 'multi') {
+    const btn = document.createElement('button');
+    btn.className = 'px-3 py-1.5 rounded-xl text-sm';
+    btn.style.backgroundColor = 'var(--brandRed)';
+    btn.style.color = 'var(--bg)';
+    btn.textContent = 'Сохранить выбор';
+    btn.onclick = () => {
+      const checked = [...document.querySelectorAll('.q_checkbox:checked')].map(cb => parseInt(cb.value));
+      window.questionnaireAnswers[q.field] = checked;
+      addChatMessage(checked.length > 0 ? checked.map(id => getCategoryById(id)?.name).join(', ') : 'Нет', false);
+      chatStep++;
+      processChatStep();
+    };
+    // Показать чекбоксы (вставляем в chat_history или buttons)
     const checkboxesDiv = document.createElement('div');
     checkboxesDiv.className = 'flex flex-wrap gap-2 mt-2';
     CATEGORIES_CONFIG.forEach(cat => {
@@ -905,28 +793,15 @@ function processChatStep() {
     });
     document.getElementById('chat_history').appendChild(checkboxesDiv);
     document.getElementById('chat_history').scrollTop = document.getElementById('chat_history').scrollHeight;
-    const btn = document.createElement('button');
-    btn.className = 'px-3 py-1.5 rounded-xl text-sm mt-2';
-    btn.style.backgroundColor = 'var(--brandRed)';
-    btn.style.color = 'var(--bg)';
-    btn.textContent = 'Сохранить выбор';
-    btn.onclick = () => {
-      const checked = [...document.querySelectorAll('.q_checkbox:checked')].map(cb => parseInt(cb.value));
-      window.questionnaireAnswers[q.field] = checked;
-      addChatMessage(checked.length > 0 ? checked.map(id => getCategoryById(id)?.name).join(', ') : 'Нет', false);
-      chatStep++;
-      processChatStep();
-    };
     buttonsDiv.appendChild(btn);
   }
 }
-
 function finishQuestionnaire() {
   const ans = window.questionnaireAnswers;
   let ud = loadUserData();
   ud.communicationStyle = ans.style || 'friendly';
   ud.personalBalance = parseFloat(ans.income) || 100000;
-ud.goal.name = ans.goalName || 'Моя цель';
+  ud.goal.name = 'Моя цель';
   ud.goal.target = parseFloat(ans.goalTarget) || 100000;
   ud.goal.deadline = ans.deadline || '2027-01-10';
   ud.autoTopUp.type = ans.autotopup || 'none';
@@ -935,8 +810,10 @@ ud.goal.name = ans.goalName || 'Моя цель';
   if (selectedCatIds.length > 0) {
     const limitPerCat = Math.floor(ud.goal.target / selectedCatIds.length);
     ud.categoriesLimits = selectedCatIds.map(id => ({ id, limit: limitPerCat, spent: 0 }));
+    // Всегда есть "Потрачено" (id 0)
     if (!ud.categoriesLimits.find(c => c.id === 0)) ud.categoriesLimits.push({ id: 0, limit: 0, spent: 0 });
   } else {
+    // Если ни одной категории не выбрано, оставляем только "Потрачено"
     ud.categoriesLimits = [{ id: 0, limit: 0, spent: 0 }];
   }
   ud.setupCompleted = true;
@@ -965,7 +842,6 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('limit_modal')?.addEventListener('click', (e) => { if (e.target === e.currentTarget) closeLimitModal(); });
   document.getElementById('confirm_category_btn')?.addEventListener('click', confirmCategorySelection);
   document.getElementById('category_select_modal')?.addEventListener('click', (e) => { if (e.target === e.currentTarget) closeCategorySelectModal(); });
-  
   document.addEventListener('click', (e) => {
     if (e.target.closest('#back_button')) switchScreen('screen-home');
     if (e.target.closest('.limit-item')) {
@@ -976,6 +852,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.getElementById('goal_progress_button')?.addEventListener('click', () => switchScreen('screen-goals'));
   document.getElementById('edit_goal_name_btn')?.addEventListener('click', openEditGoalModal);
+  document.getElementById('edit_goal_target_btn')?.addEventListener('click', openEditGoalModal);
   document.getElementById('save_goal_btn')?.addEventListener('click', saveGoalChanges);
   document.getElementById('cancel_goal_btn')?.addEventListener('click', closeEditGoalModal);
   document.getElementById('edit_goal_modal')?.addEventListener('click', (e) => { if (e.target === e.currentTarget) closeEditGoalModal(); });
@@ -984,7 +861,6 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('goal_transaction_close')?.addEventListener('click', closeGoalTransactionModal);
   document.getElementById('goal_transaction_modal')?.addEventListener('click', (e) => { if (e.target === e.currentTarget) closeGoalTransactionModal(); });
   document.getElementById('goal_transaction_confirm')?.addEventListener('click', performGoalTransaction);
-
   document.getElementById('autotopup_btn')?.addEventListener('click', openAutoTopUpModal);
   document.getElementById('autotopup_close')?.addEventListener('click', closeAutoTopUpModal);
   document.getElementById('autotopup_save')?.addEventListener('click', saveAutoTopUp);
@@ -995,28 +871,15 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('style_modal')?.addEventListener('click', (e) => { if (e.target === e.currentTarget) closeStyleModal(); });
 
   document.getElementById('friends_button')?.addEventListener('click', () => switchScreen('screen-friends'));
-  document.getElementById('joint_deposit_btn')?.addEventListener('click', () => openJointTransactionModal('deposit'));
-  document.getElementById('joint_withdraw_btn')?.addEventListener('click', () => openJointTransactionModal('withdraw'));
-  document.getElementById('joint_transaction_confirm')?.addEventListener('click', performJointTransaction);
-  document.getElementById('joint_transaction_close')?.addEventListener('click', closeJointTransactionModal);
-  document.getElementById('joint_transaction_modal')?.addEventListener('click', (e) => { if (e.target === e.currentTarget) closeJointTransactionModal(); });
+  document.getElementById('joint_deposit_btn')?.addEventListener('click', () => contributeJoint(prompt('Сумма внесения')));
+  document.getElementById('joint_withdraw_btn')?.addEventListener('click', () => withdrawJoint(prompt('Сумма вывода')));
 
   document.getElementById('notifications_button')?.addEventListener('click', () => switchScreen('screen-notifications'));
 
+  // Достижение цели
   document.getElementById('new_goal_btn')?.addEventListener('click', startNewGoal);
-  document.getElementById('goal_achieved_modal')?.addEventListener('click', (e) => { if (e.target === e.currentTarget) document.getElementById('goal_achieved_modal').classList.add('hidden'); });
-  document.getElementById('close_test_spend')?.addEventListener('click', () => {
-      document.getElementById('test_spend_panel').classList.add('hidden');
-  });
 
-  document.getElementById('close_limit_warning')?.addEventListener('click', () => {
-      document.getElementById('limit_warning_modal').classList.add('hidden');
-  });
-  // Закрытие по клику на фон
-  document.getElementById('limit_warning_modal')?.addEventListener('click', (e) => {
-      if (e.target === e.currentTarget) document.getElementById('limit_warning_modal').classList.add('hidden');
-  });
-
+  // Дебаг
   document.getElementById('debug_toggle')?.addEventListener('click', toggleDebugPanel);
   document.getElementById('debug_add_money')?.addEventListener('click', debugAddMoney);
   document.getElementById('debug_spend_money')?.addEventListener('click', debugSpendMoney);
