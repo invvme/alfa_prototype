@@ -135,8 +135,9 @@
                 <p class="mt-1 font-semibold" id="challenge_leader" style="color: var(--dark);">Лидирует: --</p>
             </div>
             <div class="rounded-xl p-4" style="background-color: var(--lighter-gray);">
-                <p class="font-bold mb-2" style="color: var(--dark);">✈️ Совместная копилка (<span id="joint_target">100000₽</span>)</p>
-                <p style="color: var(--dark);">Собрано: <span id="joint_saved">0₽</span></p>
+                <p class="font-bold mb-2" style="color: var(--dark);">✈️ <span id="joint_goal_name">Совместная цель</span></p>
+                <p style="color: var(--dark);">Цель: <span id="joint_target">100 000 ₽</span></p>
+                <p style="color: var(--dark);">Собрано: <span id="joint_saved">0 ₽</span></p>
                 <div class="flex gap-2 mt-2">
                     <button id="joint_deposit_btn" class="flex-1 h-10 rounded-xl text-sm" style="background-color: var(--dark); color: var(--bg);">Внести</button>
                     <button id="joint_withdraw_btn" class="flex-1 h-10 rounded-xl text-sm" style="background-color: var(--dark); color: var(--bg);">Вывести</button>
@@ -291,6 +292,19 @@
         </div>
     </div>
 
+    <!-- Edit joint goal modal -->
+    <div id="edit_joint_goal_modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+        <div class="rounded-2xl p-6 w-[320px] shadow-xl" style="background-color: var(--bg);">
+            <h2 class="text-lg font-bold mb-4" style="color: var(--dark);">Новая совместная цель</h2>
+            <label class="text-xs" style="color: var(--dark);">Название</label>
+            <input id="edit_joint_goal_name_input" class="w-full p-2 rounded-xl mb-3 border" style="border-color: var(--light-gray);">
+            <label class="text-xs" style="color: var(--dark);">Сумма (₽)</label>
+            <input id="edit_joint_goal_target_input" type="number" class="w-full p-2 rounded-xl mb-4 border" style="border-color: var(--light-gray);">
+            <button id="save_joint_goal_btn" class="w-full py-2 rounded-xl font-bold" style="background-color: var(--brandRed); color: var(--bg);">Сохранить</button>
+            <!-- <button id="cancel_joint_goal_btn" class="w-full mt-2 py-2 rounded-xl" style="background-color: var(--lighter-gray); color: var(--dark);">Отмена</button> -->
+        </div>
+    </div>
+
     <!-- Monthly stats modal -->
     <div id="monthly_stats_modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
         <div class="rounded-2xl p-6 w-[320px] max-h-[85vh] overflow-y-auto shadow-xl" style="background-color: var(--bg);">
@@ -311,8 +325,9 @@
     <!-- достижение цели у ДРУЗЕЙ -->
     <div id="joint_goal_achieved_modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] hidden">
         <div class="rounded-2xl p-6 w-[320px] shadow-xl text-center" style="background-color: var(--bg);">
-            <p id="achievement_message" class="text-xl font-bold mb-4" style="color: var(--dark);">Совместная копилка заполнена! 🎉</p>
-            <button id="new_goal_btn" class="px-6 py-3 rounded-xl font-bold text-lg" style="background-color: var(--brandRed); color: var(--bg);">Создать новую цель</button>
+            <p id="joint_achievement_message" class="text-xl font-bold mb-4" style="color: var(--dark);">🎉 Совместная копилка заполнена!</p>
+            <button id="new_joint_goal_btn" class="px-6 py-3 rounded-xl font-bold text-lg w-full" style="background-color: var(--brandRed); color: var(--bg);">Создать новую цель</button>
+            <!-- <button id="close_joint_goal_modal" class="w-full mt-2 py-2 rounded-xl" style="background-color: var(--lighter-gray); color: var(--dark);">Закрыть</button> -->
         </div>
     </div>
 

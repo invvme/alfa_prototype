@@ -32,7 +32,7 @@ const DEFAULT_USER_DATA = {
     friendName: 'Друг',
     yourProgress: 0,
     friendProgress: 0,
-    jointGoal: { target: 100000, saved: 0 }
+    jointGoal: { name: 'Совместная цель', target: 100000, saved: 0 }
   },
   lastMonthStats: null,
   lastMonthReset: new Date().toISOString()
@@ -507,6 +507,31 @@ function startNewGoal() {
   startQuestionnaire();
 }
 
+function startNewJointGoal() {
+    // Закрываем модалку достижения (если открыта)
+    document.getElementById('joint_goal_achieved_modal').classList.add('hidden');
+    // Открываем модалку редактирования
+    document.getElementById('edit_joint_goal_name_input').value = 'Совместная цель';
+    document.getElementById('edit_joint_goal_target_input').value = '100000';
+    document.getElementById('edit_joint_goal_modal').classList.remove('hidden');
+}
+
+function saveJointGoalChanges() {
+    const name = document.getElementById('edit_joint_goal_name_input').value.trim();
+    const target = parseFloat(document.getElementById('edit_joint_goal_target_input').value);
+    if (!name || isNaN(target) || target <= 0) {
+        alert('Заполните все поля корректно');
+        return;
+    }
+    let ud = loadUserData();
+    ud.challenges.jointGoal.name = name;
+    ud.challenges.jointGoal.target = target;
+    ud.challenges.jointGoal.saved = 0;
+    saveUserData(ud);
+    document.getElementById('edit_joint_goal_modal').classList.add('hidden');
+    updateFriendsScreen();
+}
+
 // Автопополнение
 function openAutoTopUpModal() {
   const ud = loadUserData();
@@ -555,8 +580,9 @@ function updateFriendsScreen() {
   const your = ud.goal.saved, friend = ud.challenges.friendProgress;
   const leader = your > friend ? 'Вы' : (friend > your ? 'Друг' : 'Ничья');
   document.getElementById('challenge_leader').textContent = 'Лидирует: ' + leader;
-  document.getElementById('joint_saved').textContent = ud.challenges.jointGoal.saved.toLocaleString() + '₽';
-  document.getElementById('joint_target').textContent = ud.challenges.jointGoal.target.toLocaleString() + '₽';
+  document.getElementById('joint_goal_name').textContent = ud.challenges.jointGoal.name || 'Совместная цель';
+  document.getElementById('joint_target').textContent = ud.challenges.jointGoal.target.toLocaleString() + ' ₽';
+  document.getElementById('joint_saved').textContent = ud.challenges.jointGoal.saved.toLocaleString() + ' ₽';
 }
 
 // Совместная копилка: открыть модалку
@@ -1039,13 +1065,23 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('notifications_button')?.addEventListener('click', () => switchScreen('screen-notifications'));
 
   document.getElementById('new_goal_btn')?.addEventListener('click', startNewGoal);
-  document.getElementById('new_joint_goal_btn')?.addEventListener('click', () => {
-    let ud = loadUserData();
-    ud.challenges.jointGoal.saved = 0;
-    saveUserData(ud);
-    document.getElementById('joint_goal_achieved_modal').classList.add('hidden');
-    updateFriendsScreen();
-  });
+  document.getElementById('new_joint_goal_btn')?.addEventListener('click', startNewJointGoal);
+
+  document.getElementById('save_joint_goal_btn')?.addEventListener('click', saveJointGoalChanges);
+  // document.getElementById('cancel_joint_goal_btn')?.addEventListener('click', () => {
+  //     document.getElementById('edit_joint_goal_modal').classList.add('hidden');
+  // });
+
+  // document.getElementById('edit_joint_goal_modal')?.addEventListener('click', (e) => {
+  //     if (e.target === e.currentTarget) document.getElementById('edit_joint_goal_modal').classList.add('hidden');
+  // });
+    // Закрытие модалки достижения совместной цели
+  // document.getElementById('close_joint_goal_modal')?.addEventListener('click', () => {
+  //     document.getElementById('joint_goal_achieved_modal').classList.add('hidden');
+  // });
+  // document.getElementById('joint_goal_achieved_modal')?.addEventListener('click', (e) => {
+  //     if (e.target === e.currentTarget) document.getElementById('joint_goal_achieved_modal').classList.add('hidden');
+  // });
   document.getElementById('goal_achieved_modal')?.addEventListener('click', (e) => { if (e.target === e.currentTarget) document.getElementById('goal_achieved_modal').classList.add('hidden'); });
   document.getElementById('close_test_spend')?.addEventListener('click', () => {
       document.getElementById('test_spend_panel').classList.add('hidden');
