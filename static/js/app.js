@@ -3,6 +3,7 @@ const DEFAULT_USER_DATA = {
   setupCompleted: false,
   communicationStyle: 'friendly',
   personalBalance: 100000,
+  monthlyIncome: 0,
   totalSpent: 0,
   monthlySpent: 0,
   monthlyProgress: 0,
@@ -19,10 +20,11 @@ const DEFAULT_USER_DATA = {
     { id: 0, limit: 0, spent: 0 } // "Потрачено"
   ],
   autoTopUp: {
-    enabled: false,
-    type: 'none',
-    percent: 10,
-    maxAmount: 5000
+      expenseEnabled: false,
+      incomeEnabled: false,
+      balanceEnabled: false,
+      percent: 10,
+      maxAmount: 5000
   },
   events: [],
   notifications: [],
@@ -84,7 +86,7 @@ function switchScreen(screenId) {
   if (screenId === 'screen-calendar') renderCalendarEvents();
   if (screenId === 'screen-home') { updateHomeStrip(); updateFinanceBlocks(); drawWheel(); }
   if (screenId === 'screen-limits') renderLimitsList();
-  if (screenId === 'screen-goals') updateGoalsScreen();
+  if (screenId === 'screen-goals') { updateGoalsScreen(); checkGoalAchievement(); }
   if (screenId === 'screen-notifications') renderNotifications();
   if (screenId === 'screen-friends') updateFriendsScreen();
 }
@@ -99,7 +101,7 @@ function updateHomeStrip() {
     if (d < minDate) { minDate = d; nextEvent = ev; }
   });
   document.getElementById('strip_date').textContent = nextEvent ? formatShortDate(minDate) : '--.--';
-  document.getElementById('strip_name').textContent = nextEvent ? nextEvent.name || 'Без названия' : 'Нет событий';
+  document.getElementById('strip_name').textContent = nextEvent ? nextEvent.name || 'Без названия' : 'Нет напоминаний';
   document.getElementById('strip_amount').textContent = nextEvent ? (nextEvent.amount || 0) + '₽' : '0₽';
 }
 
@@ -219,7 +221,7 @@ let editingCategoryId = null;
 function openLimitModal(isNew, catId = null) {
   const ud = loadUserData();
   if (isNew) {
-    const usedIds = ud.categoriesLimits.map(c => c.id);
+    const usedIds = ud.categoriesLimits.filter(c => c.limit > 0).map(c => c.id);
     const available = CATEGORIES_CONFIG.filter(c => !usedIds.includes(c.id));
     if (available.length === 0) { alert('Все категории уже добавлены'); return; }
     window._availableCategories = available;
@@ -267,7 +269,7 @@ function deleteLimitCategory() {
 let selectedCategoryId = null;
 function openCategorySelectModal() {
   const ud = loadUserData();
-  const usedIds = ud.categoriesLimits.map(c => c.id);
+  const usedIds = ud.categoriesLimits.filter(c => c.limit > 0).map(c => c.id);
   const available = CATEGORIES_CONFIG.filter(c => !usedIds.includes(c.id));
   const list = document.getElementById('category_select_list');
   list.innerHTML = '';
@@ -296,10 +298,16 @@ function updateConfirmButton() {
   btn.disabled = (selectedCategoryId === null);
   btn.classList.toggle('opacity-50', selectedCategoryId === null);
 }
+
 function confirmCategorySelection() {
   if (!selectedCategoryId) return;
   const cat = CATEGORIES_CONFIG.find(c => c.id === selectedCategoryId);
   if (!cat) return;
+  // Удаляем старую запись с нулевым лимитом, если она есть, чтобы не дублировать
+  let ud = loadUserData();
+  ud.categoriesLimits = ud.categoriesLimits.filter(c => c.id !== cat.id || c.limit > 0);
+  saveUserData(ud);
+  
   editingCategoryId = cat.id;
   document.getElementById('limit_category_name').textContent = cat.name;
   document.getElementById('limit_value').value = '';
@@ -307,6 +315,7 @@ function confirmCategorySelection() {
   closeCategorySelectModal();
   document.getElementById('limit_modal').classList.remove('hidden');
 }
+
 function closeCategorySelectModal() { document.getElementById('category_select_modal').classList.add('hidden'); }
 
 // ========== КАЛЕНДАРЬ ==========
@@ -332,7 +341,7 @@ function renderCalendarEvents() {
   const list = document.getElementById('events_list');
   const withDate = events.map(ev => ({ ev, date: getNextDate(ev) })).sort((a,b) => a.date - b.date);
   list.innerHTML = '';
-  if (withDate.length === 0) { list.innerHTML = '<p class="text-center text-sm" style="color: var(--gray);">Нет событий</p>'; return; }
+  if (withDate.length === 0) { list.innerHTML = '<p class="text-center text-sm" style="color: var(--gray);">Нет напоминаний</p>'; return; }
   withDate.forEach(item => {
     const div = document.createElement('div');
     div.className = 'flex items-center justify-between p-3 rounded-xl border cursor-pointer';
@@ -343,7 +352,7 @@ function renderCalendarEvents() {
   });
 }
 function openCreateModal() {
-  document.getElementById('modal_title').textContent = 'Новый платёж';
+  document.getElementById('modal_title').textContent = 'Новое напоминание';
   document.getElementById('event_name').value = '';
   document.querySelector('input[name="event_type"][value="one-time"]').checked = true;
   document.getElementById('event_date').value = '';
@@ -501,7 +510,9 @@ function startNewGoal() {
 // Автопополнение
 function openAutoTopUpModal() {
   const ud = loadUserData();
-  document.getElementById('autotopup_type').value = ud.autoTopUp.type;
+  document.getElementById('autotopup_expense').checked = ud.autoTopUp.expenseEnabled;
+  document.getElementById('autotopup_income').checked = ud.autoTopUp.incomeEnabled;
+  document.getElementById('autotopup_balance').checked = ud.autoTopUp.balanceEnabled;
   document.getElementById('autotopup_percent').value = ud.autoTopUp.percent;
   document.getElementById('autotopup_max').value = ud.autoTopUp.maxAmount;
   document.getElementById('autotopup_modal').classList.remove('hidden');
@@ -509,10 +520,11 @@ function openAutoTopUpModal() {
 function closeAutoTopUpModal() { document.getElementById('autotopup_modal').classList.add('hidden'); }
 function saveAutoTopUp() {
   const ud = loadUserData();
-  ud.autoTopUp.type = document.getElementById('autotopup_type').value;
+  ud.autoTopUp.expenseEnabled = document.getElementById('autotopup_expense').checked;
+  ud.autoTopUp.incomeEnabled = document.getElementById('autotopup_income').checked;
+  ud.autoTopUp.balanceEnabled = document.getElementById('autotopup_balance').checked;
   ud.autoTopUp.percent = parseFloat(document.getElementById('autotopup_percent').value) || 0;
   ud.autoTopUp.maxAmount = parseFloat(document.getElementById('autotopup_max').value) || 0;
-  ud.autoTopUp.enabled = ud.autoTopUp.type !== 'none';
   saveUserData(ud);
   closeAutoTopUpModal();
   alert('Настройки автопополнения сохранены');
@@ -572,6 +584,9 @@ function performJointTransaction() {
     ud.personalBalance += amount;
   }
   saveUserData(ud);
+  if (ud.challenges.jointGoal.saved >= ud.challenges.jointGoal.target) {
+    document.getElementById('joint_goal_achieved_modal').classList.remove('hidden');
+  }
   updateFriendsScreen();
   closeJointTransactionModal();
 }
@@ -636,9 +651,9 @@ function debugAddMoney() {
   if (!isNaN(amount) && amount > 0) {
     let ud = loadUserData();
     ud.personalBalance += amount;
-    if (ud.autoTopUp.enabled && ud.autoTopUp.type === 'percentOfIncome') {
-      const topUp = Math.min(amount * ud.autoTopUp.percent / 100, ud.autoTopUp.maxAmount || Infinity);
-      ud.goal.saved += topUp;
+    if (ud.autoTopUp.incomeEnabled) {
+        const topUp = Math.min(amount * ud.autoTopUp.percent / 100, ud.autoTopUp.maxAmount || Infinity);
+        ud.goal.saved += topUp;
     }
     saveUserData(ud);
     alert('Баланс пополнен');
@@ -688,7 +703,7 @@ function performTestSpend() {
     }
   }
 
-  if (ud.autoTopUp.enabled && ud.autoTopUp.type === 'percentOfExpense') {
+  if (ud.autoTopUp.expenseEnabled) {
     const topUp = Math.min(amount * ud.autoTopUp.percent / 100, ud.autoTopUp.maxAmount || Infinity);
     ud.goal.saved += topUp;
   }
@@ -718,7 +733,7 @@ function showLimitWarning(cat, amount, style) {
       msg = `Ты почти у цели! Но трата ${amount} ₽ на «${cfg.name}» выходит за рамки лимита (+${overPercent}%). Давай найдём баланс!`;
       break;
     case 'toxic':
-      msg = `Серьёзно? Ещё ${amount} ₽ на «${cfg.name}»? Лимит уже превышен на ${overPercent}%. Может, хватит?`;
+      msg = `Серьёзно? Ещё ${amount} ₽ на «${cfg.name}»? Лимит уже превышен на ${overPercent}%. Может хватит?`;
       break;
     default:
       msg = `Превышение лимита по категории «${cfg.name}» на ${overPercent}%.`;
@@ -736,6 +751,11 @@ function debugResetAll() {
 function debugNewMonth() {
   let ud = loadUserData();
   // 1. Вычисляем прогресс за прошедший месяц
+  if (ud.autoTopUp.incomeEnabled) {
+      const topUp = Math.min(ud.monthlyIncome * ud.autoTopUp.percent / 100, ud.autoTopUp.maxAmount || Infinity);
+      ud.personalBalance -= topUp;
+      ud.goal.saved += topUp;
+  }
   const oldPrev = ud.prevGoalPercent || 0;
   const currentPercent = ud.goal.target > 0 ? ud.goal.saved / ud.goal.target * 100 : 0;
   const progressDiff = currentPercent - oldPrev;
@@ -787,7 +807,7 @@ const chatQuestions = [
       { value: 'motivational', label: 'Мотивирующий' },
       { value: 'toxic', label: 'Токсичный' }
     ] },
-  { field: 'income', text: { friendly: 'Какой у тебя ежемесячный доход? 💰', business: 'Укажите ваш ежемесячный доход.', motivational: 'Сколько ты зарабатываешь? Это будет твоим топливом!', toxic: 'И сколько ты там получаешь? Не стесняйся.' }, type: 'number' },
+  { field: 'income', text: { friendly: 'Какой у тебя ежемесячный доход? 💰', business: 'Укажите ваш ежемесячный доход.', motivational: 'Сколько ты зарабатываешь? Это будет твоим топливом!', toxic: 'Ну сколько ты там получаешь? Мешок картошки и "спасибо"?' }, type: 'number' },
   { field: 'goalTarget', text: { friendly: 'Сколько хочешь накопить? 🎯', business: 'Введите сумму цели.', motivational: 'Какую вершину покорим? Сколько нужно накопить?', toxic: 'Ну и сколько тебе надо? Миллион? Ага, конечно.' }, type: 'number' },
   { field: 'goalName', text: { friendly: 'А как назовём твою цель? 💰', business: 'Укажите название цели.', motivational: 'Дай своей цели крутое имя!', toxic: 'Название-то какое дадим? Не «Хотелка» же.' }, type: 'text' },
   { field: 'deadline', text: { friendly: 'К какому сроку планируешь накопить? (выбери дату)', business: 'Крайний срок накопления:', motivational: 'Когда ты хочешь достичь цели?', toxic: 'Дедлайн? Или опять всё растянется?' }, type: 'date' },
@@ -926,26 +946,35 @@ function finishQuestionnaire() {
   let ud = loadUserData();
   ud.communicationStyle = ans.style || 'friendly';
   ud.personalBalance = parseFloat(ans.income) || 100000;
-ud.goal.name = ans.goalName || 'Моя цель';
+  ud.monthlyIncome = parseFloat(ans.income) || 100000;
+  ud.goal.name = ans.goalName || 'Моя цель';
   ud.goal.target = parseFloat(ans.goalTarget) || 100000;
   ud.goal.deadline = ans.deadline || '2027-01-10';
-  ud.autoTopUp.type = ans.autotopup || 'none';
-  ud.autoTopUp.enabled = ud.autoTopUp.type !== 'none';
+  const autotopupType = ans.autotopup || 'none';
+  ud.autoTopUp.expenseEnabled = (autotopupType === 'percentOfExpense');
+  ud.autoTopUp.incomeEnabled = (autotopupType === 'percentOfIncome');
+  ud.autoTopUp.balanceEnabled = (autotopupType === 'percentOfBalance');
   const selectedCatIds = ans.categories || [];
-  if (selectedCatIds.length > 0) {
-    const limitPerCat = Math.floor(ud.goal.target / selectedCatIds.length);
-    ud.categoriesLimits = selectedCatIds.map(id => ({ id, limit: limitPerCat, spent: 0 }));
-    if (!ud.categoriesLimits.find(c => c.id === 0)) ud.categoriesLimits.push({ id: 0, limit: 0, spent: 0 });
-  } else {
-    ud.categoriesLimits = [{ id: 0, limit: 0, spent: 0 }];
+  const priorityIds = [1, 6, 7, 9]; // ЖКХ, Супермаркеты, Здоровье, Транспорт
+  let totalWeight = 0;
+  const weights = selectedCatIds.map(id => priorityIds.includes(id) ? 2 : 1);
+  totalWeight = weights.reduce((s, w) => s + w, 0);
+
+  const targetTotal = ud.goal.target;
+  ud.categoriesLimits = selectedCatIds.map((id, idx) => ({
+    id,
+    limit: Math.floor(targetTotal * weights[idx] / totalWeight),
+    spent: 0
+  }));
+  // Добавляем "Потрачено"
+  if (!ud.categoriesLimits.find(c => c.id === 0)) {
+    ud.categoriesLimits.push({ id: 0, limit: 0, spent: 0 });
   }
   ud.setupCompleted = true;
   saveUserData(ud);
   document.getElementById('questionnaire_overlay').classList.add('hidden');
-  switchScreen('screen-home');
-  updateFinanceBlocks(); drawWheel(); renderLimitsList();
+  location.reload();
 }
-
 // ========== ГЛОБАЛЬНЫЕ ОБРАБОТЧИКИ ==========
 document.addEventListener('DOMContentLoaded', () => {
   const ud = loadUserData();
@@ -974,6 +1003,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  document.querySelectorAll('.nav-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const screen = btn.dataset.screen;
+      switchScreen(screen);
+    });
+  });
+
   document.getElementById('goal_progress_button')?.addEventListener('click', () => switchScreen('screen-goals'));
   document.getElementById('edit_goal_name_btn')?.addEventListener('click', openEditGoalModal);
   document.getElementById('save_goal_btn')?.addEventListener('click', saveGoalChanges);
@@ -994,7 +1030,6 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('style_save')?.addEventListener('click', saveCommunicationStyle);
   document.getElementById('style_modal')?.addEventListener('click', (e) => { if (e.target === e.currentTarget) closeStyleModal(); });
 
-  document.getElementById('friends_button')?.addEventListener('click', () => switchScreen('screen-friends'));
   document.getElementById('joint_deposit_btn')?.addEventListener('click', () => openJointTransactionModal('deposit'));
   document.getElementById('joint_withdraw_btn')?.addEventListener('click', () => openJointTransactionModal('withdraw'));
   document.getElementById('joint_transaction_confirm')?.addEventListener('click', performJointTransaction);
@@ -1004,6 +1039,13 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('notifications_button')?.addEventListener('click', () => switchScreen('screen-notifications'));
 
   document.getElementById('new_goal_btn')?.addEventListener('click', startNewGoal);
+  document.getElementById('new_joint_goal_btn')?.addEventListener('click', () => {
+    let ud = loadUserData();
+    ud.challenges.jointGoal.saved = 0;
+    saveUserData(ud);
+    document.getElementById('joint_goal_achieved_modal').classList.add('hidden');
+    updateFriendsScreen();
+  });
   document.getElementById('goal_achieved_modal')?.addEventListener('click', (e) => { if (e.target === e.currentTarget) document.getElementById('goal_achieved_modal').classList.add('hidden'); });
   document.getElementById('close_test_spend')?.addEventListener('click', () => {
       document.getElementById('test_spend_panel').classList.add('hidden');
@@ -1028,3 +1070,44 @@ document.addEventListener('DOMContentLoaded', () => {
 
   updateHomeStrip(); updateFinanceBlocks(); drawWheel(); renderLimitsList();
 });
+
+const debugBtn = document.getElementById('debug_toggle');
+let isDragging = false, startX, startY, initialLeft, initialTop;
+
+debugBtn.addEventListener('mousedown', startDrag);
+debugBtn.addEventListener('touchstart', startDrag, { passive: false });
+
+function startDrag(e) {
+  e.preventDefault();
+  isDragging = true;
+  const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+  const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+  const rect = debugBtn.getBoundingClientRect();
+  startX = clientX;
+  startY = clientY;
+  initialLeft = rect.left;
+  initialTop = rect.top;
+  window.addEventListener('mousemove', onDrag);
+  window.addEventListener('mouseup', stopDrag);
+  window.addEventListener('touchmove', onDrag, { passive: false });
+  window.addEventListener('touchend', stopDrag);
+}
+
+function onDrag(e) {
+  if (!isDragging) return;
+  e.preventDefault();
+  const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+  const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+  const dx = clientX - startX;
+  const dy = clientY - startY;
+  debugBtn.style.left = (initialLeft + dx) + 'px';
+  debugBtn.style.top = (initialTop + dy) + 'px';
+}
+
+function stopDrag() {
+  isDragging = false;
+  window.removeEventListener('mousemove', onDrag);
+  window.removeEventListener('mouseup', stopDrag);
+  window.removeEventListener('touchmove', onDrag);
+  window.removeEventListener('touchend', stopDrag);
+}

@@ -33,17 +33,18 @@
                 <button id="notifications_button" class="w-8 h-8 rounded-lg flex items-center justify-center" style="color: var(--dark);">🔔</button>
             </div>
             <div class="flex justify-center mb-4 flex-shrink-0">
-                <button id="limits_button" class="relative w-72 h-72 rounded-full overflow-hidden border-none bg-transparent cursor-pointer p-0 flex items-center justify-center" style="clip-path: circle(50% at 50% 50%);">
+                <button id="limits_button" class="relative w-60 h-60 rounded-full overflow-hidden border-none bg-transparent cursor-pointer p-0 flex items-center justify-center" style="clip-path: circle(50% at 50% 50%);">
                     <svg id="wheel_svg" class="absolute inset-0 w-full h-full" viewBox="0 0 288 288"><defs></defs></svg>
-                    <div class="relative z-10 bg-white rounded-full w-52 h-52 flex flex-col items-center justify-center p-2 overflow-hidden text-xs">
+                    <div class="relative z-10 bg-white rounded-full w-40 h-40 flex flex-col items-center justify-center p-2 overflow-hidden text-xs">
                         <div id="wheel_categories" class="w-full space-y-1"></div>
                     </div>
                 </button>
             </div>
+            <p class="text-center text-xs -mt-2 mb-2" style="color: var(--gray);">Лимиты</p>
             <button id="calendar_strip" class="flex-shrink-0 mb-4 rounded-xl overflow-hidden w-full text-left" style="background-color: var(--bg);">
                 <div class="grid" style="grid-template-columns: 50px 1fr 70px;">
                     <div class="p-3 text-center text-xs font-medium" style="background-color: var(--light-gray); color: var(--dark);" id="strip_date">--.--</div>
-                    <div class="p-3 text-xs font-medium" style="color: var(--dark);" id="strip_name">Нет событий</div>
+                    <div class="p-3 text-xs font-medium" style="color: var(--dark);" id="strip_name">Нет напоминаний</div>
                     <div class="p-3 text-center text-xs font-medium" style="color: var(--dark);" id="strip_amount">0₽</div>
                 </div>
             </button>
@@ -63,11 +64,10 @@
             </div>
             <div class="flex-shrink-0">
                 <p class="text-xs mb-1" style="color: var(--gray);"><span id="goal_name">Цель</span>: <span id="goal_percent">0%</span></p>
-                <button id="goal_progress_button" class="w-full h-3 rounded-full overflow-hidden border-none p-0 cursor-pointer transition-all duration-200 hover:opacity-80" style="background-color: var(--lighter-gray);">
+                <button id="goal_progress_button" class="w-full h-4 rounded-full overflow-hidden border-none p-0 cursor-pointer transition-all duration-200 hover:opacity-80" style="background-color: var(--lighter-gray);">
                     <div id="goal_fill" class="h-full w-0 rounded-full" style="background-color: var(--brandRed); transition: width 0.3s ease;"></div>
                 </button>
             </div>
-            <button id="friends_button" class="absolute bottom-4 right-4 w-10 h-10 rounded-full flex items-center justify-center text-lg" style="background-color: var(--dark); color: var(--bg);">👥</button>
         </div>
 
         <!-- GOALS -->
@@ -150,13 +150,22 @@
             <h2 class="text-lg font-bold mb-4" style="color: var(--dark);">Уведомления</h2>
             <div id="notifications_list" class="flex-grow overflow-y-auto space-y-3"></div>
         </div>
+
+        <div class="absolute bottom-0 left-0 right-0 flex justify-around py-2 bg-white border-t border-gray-200" id="bottom_nav">
+        <button class="nav-btn text-xs font-medium" data-screen="screen-home" style="color: var(--dark);">🏠 Дом</button>
+        <button class="nav-btn text-xs font-medium" data-screen="screen-limits" style="color: var(--dark);">📊 Лимиты</button>
+        <button class="nav-btn text-xs font-medium" data-screen="screen-calendar" style="color: var(--dark);">📅 Напомин.</button>
+        <button class="nav-btn text-xs font-medium" data-screen="screen-friends" style="color: var(--dark);">👥 Друзья</button>
+        <button class="nav-btn text-xs font-medium" data-screen="screen-goals" style="color: var(--dark);">🎯 Цель</button>
+        </div>
+
     </div>
 
     <!-- ========== MODALS ========== -->
     <!-- Event modal -->
     <div id="event_modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
         <div class="rounded-2xl p-6 w-[320px] max-h-[85vh] overflow-y-auto shadow-xl" style="background-color: var(--bg);">
-            <h2 id="modal_title" class="text-lg font-bold mb-4" style="color: var(--dark);">Новый платёж</h2>
+            <h2 id="modal_title" class="text-lg font-bold mb-4" style="color: var(--dark);">Новое напоминание</h2>
             <input id="event_name" placeholder="Название" class="w-full p-2 rounded-xl mb-3 border" style="border-color: var(--light-gray);">
             <div class="mb-3 flex gap-4">
                 <label style="color: var(--dark);"><input type="radio" name="event_type" value="one-time" checked> Разовый</label>
@@ -169,6 +178,9 @@
                     <select id="interval_unit" class="w-1/2 p-2 rounded-xl border" style="border-color: var(--light-gray);">
                         <option value="days">дни</option><option value="weeks">недели</option><option value="months">месяцы</option>
                     </select>
+                    <p class="text-xs mt-1" style="color: var(--gray);">
+                    Укажите промежуток и стартовую дату. Напоминание будет повторяться через выбранный период.
+                    </p>
                 </div>
                 <input id="start_date" type="date" class="w-full p-2 rounded-xl mb-3 border" style="border-color: var(--light-gray);">
             </div>
@@ -235,12 +247,15 @@
     <div id="autotopup_modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
         <div class="rounded-2xl p-6 w-[320px] shadow-xl" style="background-color: var(--bg);">
             <h2 class="text-lg font-bold mb-4" style="color: var(--dark);">Автопополнение</h2>
-            <select id="autotopup_type" class="w-full p-2 rounded-xl mb-3 border" style="border-color: var(--light-gray);">
-                <option value="none">Отключено</option>
-                <option value="percentOfExpense">% от расходов</option>
-                <option value="percentOfIncome">% от доходов</option>
-                <option value="percentOfBalance">% от остатка</option>
-            </select>
+            <label class="flex items-center gap-2 mb-2" style="color: var(--dark);">
+            <input type="checkbox" id="autotopup_expense"> % от расходов
+            </label>
+            <label class="flex items-center gap-2 mb-2" style="color: var(--dark);">
+            <input type="checkbox" id="autotopup_income"> % от доходов
+            </label>
+            <label class="flex items-center gap-2 mb-2" style="color: var(--dark);">
+            <input type="checkbox" id="autotopup_balance"> % от остатка на счёте
+            </label>
             <input id="autotopup_percent" type="number" placeholder="Процент" class="w-full p-2 rounded-xl mb-3 border" style="border-color: var(--light-gray);">
             <input id="autotopup_max" type="number" placeholder="Не более (₽)" class="w-full p-2 rounded-xl mb-4 border" style="border-color: var(--light-gray);">
             <button id="autotopup_save" class="w-full py-2 rounded-xl font-bold" style="background-color: var(--brandRed); color: var(--bg);">Сохранить</button>
@@ -290,6 +305,14 @@
         <div class="rounded-2xl p-6 w-[320px] shadow-xl text-center" style="background-color: var(--bg);">
             <p id="achievement_message" class="text-xl font-bold mb-4" style="color: var(--dark);">Цель достигнута! 🎉</p>
             <button id="new_goal_btn" class="px-6 py-3 rounded-xl font-bold text-lg" style="background-color: var(--brandRed); color: var(--bg);">Хочу новую цель</button>
+        </div>
+    </div>
+
+    <!-- достижение цели у ДРУЗЕЙ -->
+    <div id="joint_goal_achieved_modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] hidden">
+        <div class="rounded-2xl p-6 w-[320px] shadow-xl text-center" style="background-color: var(--bg);">
+            <p id="achievement_message" class="text-xl font-bold mb-4" style="color: var(--dark);">Совместная копилка заполнена! 🎉</p>
+            <button id="new_goal_btn" class="px-6 py-3 rounded-xl font-bold text-lg" style="background-color: var(--brandRed); color: var(--bg);">Создать новую цель</button>
         </div>
     </div>
 
