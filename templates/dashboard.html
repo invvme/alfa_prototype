@@ -29,7 +29,7 @@
         <!-- HOME -->
         <div id="screen-home" class="screen p-6 flex flex-col h-full">
             <div class="flex justify-between items-center mb-2 flex-shrink-0">
-                <span class="text-xl font-bold" style="color: var(--dark);">Накопилка</span>
+                <span class="text-2xl font-bold" style="color: var(--dark);">Накопилка</span>
                 <button id="notifications_button" class="w-8 h-8 rounded-lg flex items-center justify-center" style="color: var(--dark);">🔔</button>
             </div>
             <div class="flex justify-center mb-4 flex-shrink-0">
@@ -249,16 +249,22 @@
         <div class="rounded-2xl p-6 w-[320px] shadow-xl" style="background-color: var(--bg);">
             <h2 class="text-lg font-bold mb-4" style="color: var(--dark);">Автопополнение</h2>
             <label class="flex items-center gap-2 mb-2" style="color: var(--dark);">
-            <input type="checkbox" id="autotopup_expense"> % от расходов
+                <input type="checkbox" id="autotopup_expense"> % от расходов
             </label>
             <label class="flex items-center gap-2 mb-2" style="color: var(--dark);">
-            <input type="checkbox" id="autotopup_income"> % от доходов
+                <input type="checkbox" id="autotopup_income"> % от доходов
             </label>
             <label class="flex items-center gap-2 mb-2" style="color: var(--dark);">
-            <input type="checkbox" id="autotopup_balance"> % от остатка на счёте
+                <input type="checkbox" id="autotopup_balance"> % от остатка на счёте
             </label>
+
+            <!-- === ДОБАВИТЬ ЭТИ ДВЕ СТРОКИ === -->
+            <p class="text-xs mb-1" style="color: var(--gray);">Какой процент отчислять</p>
             <input id="autotopup_percent" type="number" placeholder="Процент" class="w-full p-2 rounded-xl mb-3 border" style="border-color: var(--light-gray);">
+
+            <p class="text-xs mb-1" style="color: var(--gray);">Но не больше, чем ... ₽</p>
             <input id="autotopup_max" type="number" placeholder="Не более (₽)" class="w-full p-2 rounded-xl mb-4 border" style="border-color: var(--light-gray);">
+
             <button id="autotopup_save" class="w-full py-2 rounded-xl font-bold" style="background-color: var(--brandRed); color: var(--bg);">Сохранить</button>
             <button id="autotopup_close" class="w-full mt-2 py-2 rounded-xl" style="background-color: var(--lighter-gray); color: var(--dark);">Отмена</button>
         </div>
